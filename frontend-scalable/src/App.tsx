@@ -1,7 +1,10 @@
+import { Navbar } from "./components/Navbar";
+
 function App() {
   return (
     <>
-      <div className="min-h-screen bg-[#F5F7FA]">
+      <div className="min-h-screen bg-background">
+        <Navbar />
         <h1 className="text-3xl md:text-4xl text-[#E86701] font-bold mb-4">
           SCALABLE JUAN{" "}
         </h1>
