@@ -2,9 +2,17 @@ import { DollarSign, Wallet } from "lucide-react";
 import { Button } from "./Button";
 import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
+import { useNavigate } from "react-router-dom";
 
 export const Navbar = () => {
   const [activeTab, setActiveTab] = useState("marketplace");
+  //const navigate = useNavigate();
+  const navItems = [
+    { key: "marketplace", label: "Marketplace", path: "/marketplace" },
+    { key: "explorer", label: "Project Explorer", path: "/explorer" },
+    { key: "dashboard", label: "Dashboard", path: "/dashboard" },
+    { key: "organizer", label: "Organizer", path: "/organizer" },
+  ];
   return (
     <div>
       <header className="border-b bg-card">
@@ -13,35 +21,26 @@ export const Navbar = () => {
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
                 <div className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center">
-                  <DollarSign className="w-5 h-5 text-accent-foreground" />
                 </div>
-                <h1 className="text-xl font-bold text-foreground">CrowdLend</h1>
+                <DollarSign className="w-5 h-5 text-accent-foreground" />
+                <h1 className="text-xl font-bold text-foreground cursor-crosshair">CrowdLend</h1>
               </div>
-              <nav className="hidden md:flex space-x-6">
-                <Button
-                  variant={activeTab === "marketplace" ? "default" : "ghost"}
-                  onClick={() => setActiveTab("marketplace")}
-                >
-                  Marketplace
-                </Button>
-                <Button
-                  variant={activeTab === "explorer" ? "default" : "ghost"}
-                  onClick={() => setActiveTab("explorer")}
-                >
-                  Project Explorer
-                </Button>
-                <Button
-                  variant={activeTab === "dashboard" ? "default" : "ghost"}
-                  onClick={() => setActiveTab("dashboard")}
-                >
-                  Dashboard
-                </Button>
-                <Button
-                  variant={activeTab === "organizer" ? "default" : "ghost"}
-                  onClick={() => setActiveTab("organizer")}
-                >
-                  Organizer
-                </Button>
+              <nav className="hidden md:flex items-center justify-center flex-1">
+                <div className="flex w-full justify-center gap-8">
+                  {navItems.map((item) => (
+                    <Button
+                      key={item.key}
+                      variant={activeTab === item.key ? "default" : "ghost"}
+                      onClick={() => {
+                        setActiveTab(item.key);
+                        //navigate(item.path);
+                      }}
+                      className="transition-all hover:font-bold hover:text-lg cursor-pointer"
+                    >
+                      {item.label}
+                    </Button>
+                  ))}
+                </div>
               </nav>
             </div>
             <div className="flex items-center space-x-4">
@@ -49,7 +48,7 @@ export const Navbar = () => {
                 <Wallet className="w-4 h-4 mr-2" />
                 Connect Wallet
               </Button>
-              <Avatar>
+              <Avatar className="w-8 h-8 border items-center justify-center rounded-full">
                 <AvatarImage src="/diverse-user-avatars.png" />
                 <AvatarFallback>JD</AvatarFallback>
               </Avatar>
