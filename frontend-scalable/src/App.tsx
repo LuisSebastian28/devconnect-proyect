@@ -1,8 +1,10 @@
 function App() {
   return (
     <>
-      <div>
-        <h1>SCALABLE JUAN </h1>
+      <div className="min-h-screen bg-[#F5F7FA]">
+        <h1 className="text-3xl md:text-4xl text-[#E86701] font-bold mb-4">
+          SCALABLE JUAN{" "}
+        </h1>
         <h2>SCALABLE JUAN </h2>
       </div>
       <p className="read-the-docs">
