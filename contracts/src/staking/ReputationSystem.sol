@@ -47,7 +47,7 @@ contract ReputationSystem is IReputationSystem, Pausable {
     
     // ============ CONSTRUCTOR ============
     
-    constructor(address _platformFactory) Pausable() {
+    constructor(address _platformFactory)  {
         platformFactory = _platformFactory;
         _initializeBadgeRequirements();
     }

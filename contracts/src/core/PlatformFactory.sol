@@ -66,7 +66,7 @@ contract PlatformFactory is Pausable, ReentrancyGuard {
     
     // ============ CONSTRUCTOR ============
     
-    constructor() Pausable() {
+    constructor()  {
         admin = msg.sender;
         _initializeDefaultCategories();
     }

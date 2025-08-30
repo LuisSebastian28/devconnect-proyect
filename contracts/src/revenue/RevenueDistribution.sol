@@ -57,7 +57,7 @@ contract RevenueDistribution is IRevenue, Pausable, ReentrancyGuard {
     
     // ============ CONSTRUCTOR ============
     
-    constructor(address _platformFactory, address _treasury) Pausable() {
+    constructor(address _platformFactory, address _treasury) {
         platformFactory = _platformFactory;
         treasury = _treasury;
         _initializeDefaultFeeStructures();
@@ -88,7 +88,7 @@ contract RevenueDistribution is IRevenue, Pausable, ReentrancyGuard {
      */
     function calculateSuccessFee(uint256 profits) 
         public // ✅ Cambiado de external a public
-        view 
+        pure 
         override 
         returns (uint256) 
     {

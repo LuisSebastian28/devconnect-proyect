@@ -65,7 +65,7 @@ contract UniversalProject is Pausable, ReentrancyGuard {
     
     // ============ CONSTRUCTOR ============
     
-    constructor(address _platformFactory) Pausable() {
+    constructor(address _platformFactory) {
         platformFactory = _platformFactory;
         _projectIdCounter = 0;
     }
