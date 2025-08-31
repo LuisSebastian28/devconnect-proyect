@@ -1,12 +1,19 @@
-import { DollarSign, Wallet } from "lucide-react";
+import { DollarSign } from "lucide-react";
 import { Button } from "./Button";
 import { useState } from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
-import { useNavigate } from "react-router-dom";
+import { useAccount } from "wagmi";
+
+import { WalletOptions } from "./WalletOptions";
+import { Account } from "./Account";
+
+function ConnectWallet() {
+  const { isConnected } = useAccount();
+  if (isConnected) return <Account />;
+  return <WalletOptions />;
+}
 
 export const Navbar = () => {
   const [activeTab, setActiveTab] = useState("marketplace");
-  //const navigate = useNavigate();
   const navItems = [
     { key: "marketplace", label: "Marketplace", path: "/marketplace" },
     { key: "explorer", label: "Project Explorer", path: "/explorer" },
@@ -20,10 +27,11 @@ export const Navbar = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center">
-                </div>
+                <div className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center"></div>
                 <DollarSign className="w-5 h-5 text-accent-foreground" />
-                <h1 className="text-xl font-bold text-foreground cursor-crosshair">CrowdLend</h1>
+                <h1 className="text-xl font-bold text-foreground cursor-crosshair">
+                  CrowdLend
+                </h1>
               </div>
               <nav className="hidden md:flex items-center justify-center flex-1">
                 <div className="flex w-full justify-center gap-8">
@@ -43,16 +51,7 @@ export const Navbar = () => {
                 </div>
               </nav>
             </div>
-            <div className="flex items-center space-x-4">
-              <Button variant="outline" size="sm">
-                <Wallet className="w-4 h-4 mr-2" />
-                Connect Wallet
-              </Button>
-              <Avatar className="w-8 h-8 border items-center justify-center rounded-full">
-                <AvatarImage src="/diverse-user-avatars.png" />
-                <AvatarFallback>JD</AvatarFallback>
-              </Avatar>
-            </div>
+            <div className="flex items-center space-x-4">{ConnectWallet()}</div>
           </div>
         </div>
       </header>
