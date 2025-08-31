@@ -263,7 +263,7 @@ export default function Catalog() {
             </Card>
             <Card>
               <CardContent className="p-6 flex items-center space-x-2">
-                <BarChart3 className="w-5 h-5 text-accent" />
+                <BarChart3 className="w-5 h-5 text-accent text-red-600" />
                 <div>
                   <p className="text-sm text-muted-foreground">Avg. ROI</p>
                   <p className="text-2xl font-bold">
@@ -515,7 +515,8 @@ export default function Catalog() {
             <div className="container mx-auto">
               <div className="text-center mb-16">
                 <h2 className="text-4xl md:text-5xl font-bold mb-4 text-slate-900">
-                  Why Choose FundMyImport
+                  Why Choose CrowdLend
+
                 </h2>
                 <p className="text-xl text-slate-600 max-w-2xl mx-auto">
                   The most reliable platform for import financing
