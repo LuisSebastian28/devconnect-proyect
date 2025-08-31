@@ -5,6 +5,7 @@ import { useAccount } from "wagmi";
 
 import { WalletOptions } from "./WalletOptions";
 import { Account } from "./Account";
+import { useNavigate } from "react-router-dom";
 
 function ConnectWallet() {
   const { isConnected } = useAccount();
@@ -13,6 +14,7 @@ function ConnectWallet() {
 }
 
 export const Navbar = () => {
+  const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState("marketplace");
   const navItems = [
     // { key: "marketplace", label: "Marketplace", path: "/marketplace" },
@@ -40,7 +42,7 @@ export const Navbar = () => {
                         variant={activeTab === item.key ? "default" : "ghost"}
                         onClick={() => {
                           setActiveTab(item.key);
-                          //navigate(item.path);
+                          navigate(item.path);
                         }}
                         className=" border full-rounded transition-all hover:font-bold hover:text-lg hover:bg-purple-100 cursor-crosshair"
                       >
