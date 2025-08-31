@@ -17,7 +17,6 @@ export const Navbar = () => {
   const navItems = [
     // { key: "marketplace", label: "Marketplace", path: "/marketplace" },
     { key: "explorer", label: "Project Explorer", path: "/explorer" },
-    { key: "investor", label: "Investors", path: "/Investor" },
     { key: "entrepreneur", label: "Entrepreneurs", path: "/Entrepreneurs" },
   ];
   return (
@@ -43,7 +42,7 @@ export const Navbar = () => {
                           setActiveTab(item.key);
                           //navigate(item.path);
                         }}
-                        className=" border full-rounded transition-all hover:font-bold hover:text-lg hover:bg-purple-100 cursor-pointer"
+                        className=" border full-rounded transition-all hover:font-bold hover:text-lg hover:bg-purple-100 cursor-crosshair"
                       >
                         {item.label}
                       </Button>
