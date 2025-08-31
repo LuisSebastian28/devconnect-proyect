@@ -18,34 +18,36 @@ export const Navbar = () => {
       <header className="border-b bg-card">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-4 cursor-crosshair">
               <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center">
+                <div className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center bg-purple-500">
+                  <DollarSign className="w-5 h-5 text-accent-foreground" />
                 </div>
-                <DollarSign className="w-5 h-5 text-accent-foreground" />
-                <h1 className="text-xl font-bold text-foreground cursor-crosshair">CrowdLend</h1>
+                <h1 className="text-xl font-bold text-foreground">CrowdLend</h1>
               </div>
-              <nav className="hidden md:flex items-center justify-center flex-1">
-                <div className="flex w-full justify-center gap-8">
+                <div className="flex flex-1 justify-end">
+                <nav className="hidden md:flex items-center">
+                  <div className="flex gap-8">
                   {navItems.map((item) => (
                     <Button
-                      key={item.key}
-                      variant={activeTab === item.key ? "default" : "ghost"}
-                      onClick={() => {
-                        setActiveTab(item.key);
-                        //navigate(item.path);
-                      }}
-                      className="transition-all hover:font-bold hover:text-lg cursor-pointer"
+                    key={item.key}
+                    variant={activeTab === item.key ? "default" : "ghost"}
+                    onClick={() => {
+                      setActiveTab(item.key);
+                      //navigate(item.path);
+                    }}
+                    className=" border full-rounded transition-all hover:font-bold hover:text-lg hover:bg-purple-100 cursor-pointer"
                     >
-                      {item.label}
+                    {item.label}
                     </Button>
                   ))}
+                  </div>
+                </nav>
                 </div>
-              </nav>
             </div>
             <div className="flex items-center space-x-4">
               <Button variant="outline" size="sm">
-                <Wallet className="w-4 h-4 mr-2" />
+                <Wallet className="w-4 h-4 mr-2 hover:" />
                 Connect Wallet
               </Button>
               <Avatar className="w-8 h-8 border items-center justify-center rounded-full">
