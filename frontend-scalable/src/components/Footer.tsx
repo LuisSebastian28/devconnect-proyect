@@ -81,7 +81,7 @@ const Footer: FC = () => {
           {/* Dynamic Sections */}
           {footerSections.map((section) => (
             <div key={section.title}>
-              <h4 className="font-semibold mb-4 text-blue-400">
+              <h4 className="font-semibold mb-4 text-indigo-400">
                 {section.title}
               </h4>
               <ul className="space-y-2 text-sm">
@@ -89,7 +89,7 @@ const Footer: FC = () => {
                   <li key={link.text}>
                     <a
                       href={link.href}
-                      className="text-slate-300 hover:text-blue-400 transition-colors duration-200 ease-in-out"
+                      className="text-slate-300 hover:text-indigo-400 transition-colors duration-200 ease-in-out"
                     >
                       {link.text}
                     </a>
@@ -101,7 +101,7 @@ const Footer: FC = () => {
 
           {/* Contact */}
           <div>
-            <h4 className="font-semibold mb-4 text-blue-400">Contact</h4>
+            <h4 className="font-semibold mb-4 text-indigo-400">Contact</h4>
             <p className="text-sm text-slate-300 mb-4">
               varor.joseroberto@gmail.com
               <br />
@@ -113,7 +113,7 @@ const Footer: FC = () => {
                   key={social.ariaLabel}
                   href={social.href}
                   aria-label={social.ariaLabel}
-                  className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-blue-600 flex items-center justify-center transition-all duration-200 ease-in-out hover:scale-105 text-slate-300 hover:text-white"
+                  className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-indigo-600 flex items-center justify-center transition-all duration-200 ease-in-out hover:scale-105 text-slate-300 hover:text-white"
                 >
                   {social.icon}
                 </a>

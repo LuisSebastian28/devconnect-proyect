@@ -15,10 +15,10 @@ function ConnectWallet() {
 export const Navbar = () => {
   const [activeTab, setActiveTab] = useState("marketplace");
   const navItems = [
-    { key: "marketplace", label: "Marketplace", path: "/marketplace" },
+    // { key: "marketplace", label: "Marketplace", path: "/marketplace" },
     { key: "explorer", label: "Project Explorer", path: "/explorer" },
-    { key: "dashboard", label: "Dashboard", path: "/dashboard" },
-    { key: "organizer", label: "Organizer", path: "/organizer" },
+    { key: "investor", label: "Investors", path: "/Investor" },
+    { key: "entrepreneur", label: "Entrepreneurs", path: "/Entrepreneurs" },
   ];
   return (
     <div>
