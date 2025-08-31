@@ -2,7 +2,6 @@
 pragma solidity ^0.8.30;
 
 contract LendingProject {
-    // Información del préstamo
     address public borrower;
     uint256 public loanAmount;
     uint256 public interestRate;
@@ -10,30 +9,47 @@ contract LendingProject {
     uint256 public totalRaised;
     uint256 public deadline;
     uint256 public repaymentDeadline;
+    uint256 public borrowerStake;
     bool public loanFunded;
     bool public loanRepaid;
     bool public loanWithdrawn;
     
+    address public factory;
+    uint256 public constant STAKE_PERCENTAGE = 10; // 10% de stake
+    
     mapping(address => uint256) public lenders;
     address[] public lenderAddresses;
     
+    // EVENTOS CORREGIDOS
     event Funded(address lender, uint256 amount);
     event LoanFunded(uint256 totalRaised);
     event LoanRepaid(uint256 totalRepayment);
     event Default(address borrower, uint256 amountLost);
+    event Refunded(address lender, uint256 amount);
+    event StakeDeposited(address indexed borrower, uint256 amount); // ✅ CORREGIDO
     
     constructor(
-    address _borrower,  
-    uint256 _loanAmount,
-    uint256 _interestRate, 
-    uint256 _durationDays
-) {
-    borrower = _borrower;
-    loanAmount = _loanAmount;
-    interestRate = _interestRate;
-    duration = _durationDays * 1 days;
-    deadline = block.timestamp + 30 days;
-}
+        address _borrower,
+        uint256 _loanAmount,
+        uint256 _interestRate, 
+        uint256 _durationDays
+    ) payable {
+        require(msg.value > 0, "Stake required");
+        
+        borrower = _borrower;
+        loanAmount = _loanAmount;
+        interestRate = _interestRate;
+        duration = _durationDays * 1 days;
+        deadline = block.timestamp + 30 days;
+        factory = msg.sender;
+        
+        // Calcular y verificar stake (10% del loan amount)
+        uint256 requiredStake = (_loanAmount * STAKE_PERCENTAGE) / 100;
+        require(msg.value >= requiredStake, "Insufficient stake");
+        borrowerStake = msg.value;
+        
+        emit StakeDeposited(_borrower, msg.value); // ✅ CORREGIDO
+    }
     
     function lend() external payable {
         require(block.timestamp < deadline, "Funding period ended");
@@ -58,16 +74,17 @@ contract LendingProject {
     function withdrawLoan() external {
         require(msg.sender == borrower, "Only borrower");
         require(loanFunded, "Loan not fully funded");
-        require(!loanWithdrawn, "Loan already withdrawn"); // ✅ Nuevo check
+        require(!loanWithdrawn, "Loan already withdrawn");
         require(!loanRepaid, "Loan already repaid");
         
-        loanWithdrawn = true; // ✅ Marcar como retirado
+        loanWithdrawn = true;
         payable(borrower).transfer(loanAmount);
     }
     
     function repayLoan() external payable {
+        require(msg.sender == borrower, "Only borrower");
         require(loanFunded, "Loan not funded");
-        require(loanWithdrawn, "Loan not withdrawn"); // ✅ Asegurar que se retiró
+        require(loanWithdrawn, "Loan not withdrawn");
         require(!loanRepaid, "Loan already repaid");
         require(block.timestamp <= repaymentDeadline, "Loan defaulted");
         
@@ -75,10 +92,16 @@ contract LendingProject {
         require(msg.value >= totalRepayment, "Insufficient repayment");
         
         loanRepaid = true;
+        
+        // Devolver stake al borrower + exceso de pago
+        uint256 excess = msg.value - totalRepayment;
+        if (excess > 0) {
+            payable(borrower).transfer(excess);
+        }
+        
         emit LoanRepaid(totalRepayment);
     }
     
-    // Distribuir reembolsos si no se consigue el funding
     function claimRefund() external {
         require(block.timestamp >= deadline, "Funding period not ended");
         require(!loanFunded, "Loan was funded");
@@ -87,40 +110,39 @@ contract LendingProject {
         uint256 amount = lenders[msg.sender];
         lenders[msg.sender] = 0;
         payable(msg.sender).transfer(amount);
+        emit Refunded(msg.sender, amount);
     }
     
-    // Distribuir fondos a lenders después del repago
     function distributeToLenders() external {
         require(loanRepaid, "Loan not repaid");
+        require(address(this).balance > 0, "No funds to distribute");
         
-        uint256 totalRepayment = address(this).balance;
+        uint256 totalToDistribute = address(this).balance;
         for (uint256 i = 0; i < lenderAddresses.length; i++) {
             address lender = lenderAddresses[i];
-            uint256 share = (lenders[lender] * totalRepayment) / totalRaised;
+            uint256 share = (lenders[lender] * totalToDistribute) / totalRaised;
             payable(lender).transfer(share);
         }
     }
     
-    // Handle default (después de deadline)
     function handleDefault() external {
         require(block.timestamp > repaymentDeadline, "Not defaulted yet");
         require(!loanRepaid, "Loan was repaid");
+        require(loanFunded, "Loan not funded");
         
-        // Aquí iría la lógica de liquidación de colateral
-        // Por ahora solo emitimos evento
+        // Liquidar stake del borrower a lenders
+        uint256 totalToDistribute = borrowerStake;
+        for (uint256 i = 0; i < lenderAddresses.length; i++) {
+            address lender = lenderAddresses[i];
+            uint256 share = (lenders[lender] * totalToDistribute) / totalRaised;
+            payable(lender).transfer(share);
+        }
+        
         emit Default(borrower, loanAmount);
     }
     
-    // Get detalles del préstamo
     function getLoanDetails() external view returns (
-        address,
-        uint256,
-        uint256,
-        uint256,
-        uint256,
-        uint256,
-        bool,
-        bool
+        address, uint256, uint256, uint256, uint256, uint256, bool, bool, uint256
     ) {
         return (
             borrower,
@@ -130,7 +152,13 @@ contract LendingProject {
             totalRaised,
             repaymentDeadline,
             loanFunded,
-            loanRepaid
+            loanRepaid,
+            borrowerStake
         );
+    }
+
+    modifier onlyFactory() {
+        require(msg.sender == factory, "Only factory");
+        _;
     }
 }

@@ -4,36 +4,77 @@ pragma solidity ^0.8.30;
 import "./LendingProject.sol";
 
 contract LendingFactory {
-    // Array para guardar todas las direcciones de préstamos creados
+    address public owner;
+    uint256 public constant MIN_LOAN_AMOUNT = 0.1 ether;
+    uint256 public constant MAX_LOAN_AMOUNT = 1000 ether;
+    uint256 public constant MIN_DURATION = 7;  
+    uint256 public constant MAX_DURATION = 365;
+    
     address[] public allLoans;
-
-    // Mapeo para tracking de préstamos por borrower
     mapping(address => address[]) public loansByBorrower;
+    mapping(address => bool) public approvedBorrowers;
 
-    // Eventos
-    event LoanCreated(
-        address indexed loanAddress,
-        address indexed borrower,
-        uint256 loanAmount,
-        uint256 interestRate,
-        uint256 durationDays
-    );
+    event LoanCreated(address indexed loanAddress, address indexed borrower, uint256 loanAmount, uint256 interestRate, uint256 durationDays);
+    event BorrowerApproved(address indexed borrower);
+    event BorrowerRevoked(address indexed borrower);
 
-    // Función para crear un nuevo préstamo
+    constructor() {
+        owner = msg.sender;
+    }
+
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Only owner");
+        _;
+    }
+
+    modifier onlyApprovedBorrower() {
+        require(approvedBorrowers[msg.sender], "Not approved borrower");
+        _;
+    }
+
+    function approveBorrower(address _borrower) external onlyOwner {
+        approvedBorrowers[_borrower] = true;
+        emit BorrowerApproved(_borrower);
+    }
+
+    function revokeBorrower(address _borrower) external onlyOwner {
+        approvedBorrowers[_borrower] = false;
+        emit BorrowerRevoked(_borrower);
+    }
+
+    function calculateInterestRate(uint256 _loanAmount, uint256 _durationDays) public pure returns (uint256) {
+        // interés base + riesgo por plazo + riesgo por monto
+        uint256 baseRate = 500; // 5% base
+        uint256 durationRisk = (_durationDays * 10) / 30; // +1% por cada 30 días
+        uint256 amountRisk = (_loanAmount * 100) / 1000 ether; // +1% por cada 1000 ETH
+        
+        uint256 totalInterest = baseRate + durationRisk + amountRisk;
+        
+        // Límites: mínimo 5%, máximo 25%
+        if (totalInterest < 500) totalInterest = 500;
+        if (totalInterest > 2500) totalInterest = 2500;
+        
+        return totalInterest;
+    }
+
     function createLoan(
         uint256 _loanAmount,
-        uint256 _interestRate,
         uint256 _durationDays
-    ) external returns (address) {
-        require(_loanAmount > 0, "Loan amount must be greater than 0");
-        require(_interestRate > 0, "Interest rate must be greater than 0");
-        require(_durationDays > 0, "Duration must be greater than 0");
+    ) external payable onlyApprovedBorrower returns (address) {
+        require(_loanAmount >= MIN_LOAN_AMOUNT && _loanAmount <= MAX_LOAN_AMOUNT, "Invalid loan amount");
+        require(_durationDays >= MIN_DURATION && _durationDays <= MAX_DURATION, "Invalid duration");
+        
+        // Verificar que el borrower envió el stake suficiente
+        uint256 requiredStake = (_loanAmount * 10) / 100;
+        require(msg.value >= requiredStake, "Insufficient stake");
+        
+        uint256 interestRate = calculateInterestRate(_loanAmount, _durationDays);
 
-        // Pasar msg.sender (el borrower real) al constructor
-        LendingProject newLoan = new LendingProject(
+        // Pasar el stake al constructor de LendingProject
+        LendingProject newLoan = new LendingProject{value: msg.value}(
             msg.sender,
             _loanAmount,
-            _interestRate,
+            interestRate,
             _durationDays
         );
 
@@ -41,30 +82,18 @@ contract LendingFactory {
         allLoans.push(loanAddress);
         loansByBorrower[msg.sender].push(loanAddress);
 
-        emit LoanCreated(
-            loanAddress,
-            msg.sender, 
-            _loanAmount,
-            _interestRate,
-            _durationDays
-        );
-
+        emit LoanCreated(loanAddress, msg.sender, _loanAmount, interestRate, _durationDays);
         return loanAddress;
     }
 
-    // Obtener todos los préstamos creados
     function getAllLoans() external view returns (address[] memory) {
         return allLoans;
     }
 
-    // Obtener préstamos de un borrower específico
-    function getLoansByBorrower(
-        address _borrower
-    ) external view returns (address[] memory) {
+    function getLoansByBorrower(address _borrower) external view returns (address[] memory) {
         return loansByBorrower[_borrower];
     }
 
-    // Obtener el número total de préstamos
     function getTotalLoans() external view returns (uint256) {
         return allLoans.length;
     }
