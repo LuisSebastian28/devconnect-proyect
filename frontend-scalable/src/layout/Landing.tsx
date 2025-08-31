@@ -57,21 +57,21 @@ const steps = [
     title: "Identify Opportunities",
     description:
       "Entrepreneurs present products with proven demand and detailed import plans",
-    color: "text-blue-400",
+    color: "text-red-400",
   },
   {
     icon: Users,
     title: "Collective Investment",
     description:
       "Multiple investors fund the operation, diversifying risk and maximizing opportunities",
-    color: "text-blue-500",
+    color: "text-yellow-500",
   },
   {
     icon: TrendingUp,
     title: "Guaranteed Returns",
     description:
       "Product commercialization generates profits distributed proportionally among investors",
-    color: "text-blue-600",
+    color: "text-green-400",
   },
 ];
 
