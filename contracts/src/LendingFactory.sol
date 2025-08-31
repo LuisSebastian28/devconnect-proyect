@@ -127,8 +127,7 @@ contract LendingFactory {
             "Product name already used"
         );
         require(
-            _productInfo.expectedROI >= MIN_ROI &&
-                _productInfo.expectedROI <= MAX_ROI,
+            _productInfo.expectedROI >= MIN_ROI && _productInfo.expectedROI <= MAX_ROI,
             "Invalid ROI"
         );
         require(_productInfo.estimatedCost > 0, "Estimated cost required");

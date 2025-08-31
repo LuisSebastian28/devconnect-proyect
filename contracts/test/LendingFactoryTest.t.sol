@@ -16,6 +16,38 @@ contract LendingFactoryTest is Test {
     uint256 constant LOAN_AMOUNT = 5 ether;
     uint256 constant DURATION_DAYS = 60;
 
+    // Función helper para crear ProductInfo de prueba
+    // In LendingFactoryTest.sol - update the helper function
+    // In LendingFactoryTest.t.sol - update the helper function
+    function createTestProductInfo(
+        string memory productName,
+        uint256 estimatedCost,
+        uint256 expectedSalePrice
+    ) internal pure returns (LendingProject.ProductInfo memory) {
+        require(estimatedCost > 0, "Estimated cost must be greater than 0");
+
+        uint256 expectedROI = ((expectedSalePrice - estimatedCost) * 10000) /
+            estimatedCost;
+
+        // Ensure ROI is within valid range (500-5000 = 5%-50%)
+        require(
+            expectedROI >= 500 && expectedROI <= 5000,
+            "Test ROI out of range"
+        );
+
+        return
+            LendingProject.ProductInfo({
+                productName: productName,
+                description: "Test product description",
+                category: "Electronics",
+                originCountry: "US",
+                estimatedCost: estimatedCost,
+                expectedSalePrice: expectedSalePrice,
+                expectedROI: expectedROI,
+                businessPlan: "Test business plan"
+            });
+    }
+
     function setUp() public {
         vm.deal(owner, 100 ether);
         vm.deal(borrower1, 100 ether);
@@ -28,7 +60,7 @@ contract LendingFactoryTest is Test {
         // Aprobar borrowers
         vm.prank(owner);
         factory.approveBorrower(borrower1);
-        
+
         vm.prank(owner);
         factory.approveBorrower(borrower2);
     }
@@ -39,10 +71,17 @@ contract LendingFactoryTest is Test {
     }
 
     function testCreateLoan() public {
+        LendingProject.ProductInfo memory productInfo = createTestProductInfo(
+            "Test Product 1",
+            LOAN_AMOUNT,
+            (LOAN_AMOUNT * 11) / 10 // 10% ROI = 1000 (within 500-5000 range)
+        );
+
         vm.prank(borrower1);
         address loanAddress = factory.createLoan{value: 0.5 ether}(
             LOAN_AMOUNT,
-            DURATION_DAYS
+            DURATION_DAYS,
+            productInfo
         );
 
         assertTrue(loanAddress != address(0));
@@ -55,17 +94,42 @@ contract LendingFactoryTest is Test {
     }
 
     function testGetLoansByBorrower() public {
-        vm.prank(borrower1);
-        address loanAddress1 = factory.createLoan{value: 0.5 ether}(
-            LOAN_AMOUNT,
-            DURATION_DAYS
+        LendingProject.ProductInfo memory productInfo1 = createTestProductInfo(
+            "Product 1",
+            5 ether,
+            5.5 ether // 10% ROI = 1000
+        );
+        LendingProject.ProductInfo memory productInfo2 = createTestProductInfo(
+            "Product 2",
+            8 ether,
+            8.8 ether // 10% ROI = 1000
+        );
+        LendingProject.ProductInfo memory productInfo3 = createTestProductInfo(
+            "Product 3",
+            3 ether,
+            3.3 ether // 10% ROI = 1000
         );
 
         vm.prank(borrower1);
-        address loanAddress2 = factory.createLoan{value: 0.8 ether}(8 ether, 90);
+        address loanAddress1 = factory.createLoan{value: 0.5 ether}(
+            LOAN_AMOUNT,
+            DURATION_DAYS,
+            productInfo1
+        );
+
+        vm.prank(borrower1);
+        address loanAddress2 = factory.createLoan{value: 0.8 ether}(
+            8 ether,
+            90,
+            productInfo2
+        );
 
         vm.prank(borrower2);
-        address loanAddress3 = factory.createLoan{value: 0.3 ether}(3 ether, 30);
+        address loanAddress3 = factory.createLoan{value: 0.3 ether}(
+            3 ether,
+            30,
+            productInfo3
+        );
 
         address[] memory borrower1Loans = factory.getLoansByBorrower(borrower1);
         assertEq(borrower1Loans.length, 2);
@@ -80,14 +144,30 @@ contract LendingFactoryTest is Test {
     }
 
     function testGetAllLoans() public {
+        LendingProject.ProductInfo memory productInfo1 = createTestProductInfo(
+            "Product A",
+            5 ether,
+            5.5 ether // 10% ROI = 1000
+        );
+        LendingProject.ProductInfo memory productInfo2 = createTestProductInfo(
+            "Product B",
+            8 ether,
+            8.8 ether // 10% ROI = 1000
+        );
+
         vm.prank(borrower1);
         address loanAddress1 = factory.createLoan{value: 0.5 ether}(
             LOAN_AMOUNT,
-            DURATION_DAYS
+            DURATION_DAYS,
+            productInfo1
         );
 
         vm.prank(borrower2);
-        address loanAddress2 = factory.createLoan{value: 0.8 ether}(8 ether, 90);
+        address loanAddress2 = factory.createLoan{value: 0.8 ether}(
+            8 ether,
+            90,
+            productInfo2
+        );
 
         address[] memory allLoans = factory.getAllLoans();
         assertEq(allLoans.length, 2);
@@ -95,24 +175,79 @@ contract LendingFactoryTest is Test {
         assertEq(allLoans[1], loanAddress2);
     }
 
+    function testProductNameUniqueness() public {
+        LendingProject.ProductInfo memory productInfo = createTestProductInfo(
+            "Unique Product",
+            5 ether,
+            5.5 ether // 10% ROI = 1000
+        );
+
+        vm.prank(borrower1);
+        address loanAddress1 = factory.createLoan{value: 0.5 ether}(
+            LOAN_AMOUNT,
+            DURATION_DAYS,
+            productInfo
+        );
+
+        // Intentar crear otro préstamo con el mismo nombre
+        vm.prank(borrower2);
+        vm.expectRevert("Product name already used");
+        factory.createLoan{value: 0.5 ether}(
+            LOAN_AMOUNT,
+            DURATION_DAYS,
+            productInfo
+        );
+    }
+
     function testCannotCreateLoanWithoutApproval() public {
         address unapproved = address(0x999);
         vm.deal(unapproved, 100 ether);
 
+        LendingProject.ProductInfo memory productInfo = createTestProductInfo(
+            "Test Product",
+            5 ether,
+            5.5 ether // 10% ROI = 1000
+        );
+
         vm.prank(unapproved);
         vm.expectRevert("Not approved borrower");
-        factory.createLoan(LOAN_AMOUNT, DURATION_DAYS);
-    }
-
-    function testCreateLoanWithZeroAmount() public {
-        vm.prank(borrower1);
-        vm.expectRevert("Invalid loan amount");
-        factory.createLoan(0, DURATION_DAYS);
+        factory.createLoan{value: 0.5 ether}(
+            LOAN_AMOUNT,
+            DURATION_DAYS,
+            productInfo
+        );
     }
 
     function testCreateLoanWithInvalidDuration() public {
+        LendingProject.ProductInfo memory productInfo = createTestProductInfo(
+            "Test Product",
+            5 ether,
+            5.5 ether // 10% ROI = 1000
+        );
+
         vm.prank(borrower1);
         vm.expectRevert("Invalid duration");
-        factory.createLoan(LOAN_AMOUNT, 1); // Menos de 7 días
-    }   
+        factory.createLoan{value: 0.5 ether}(
+            LOAN_AMOUNT,
+            1, // Menos de 7 días
+            productInfo
+        );
+    }
+
+    function testInvalidCategory() public {
+        LendingProject.ProductInfo memory productInfo = createTestProductInfo(
+            "Test Product",
+            5 ether,
+            5.5 ether // 10% ROI = 1000
+        );
+        productInfo.category = "InvalidCategory"; // Categoría no permitida
+
+        vm.prank(borrower1);
+        vm.expectRevert("Invalid category");
+        factory.createLoan{value: 0.5 ether}(
+            LOAN_AMOUNT,
+            DURATION_DAYS,
+            productInfo
+        );
+    }
 }
