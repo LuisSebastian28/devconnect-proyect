@@ -1,1 +1,33 @@
 @import "tailwindcss";
+@import "tailwindcss";
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes flowDot {
+  0% {
+    transform: translateX(0) scale(0.5);
+    opacity: 0;
+  }
+  50% {
+    transform: translateX(50%) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(100%) scale(0.5);
+    opacity: 0;
+  }
+}
+
+/* Add this to your existing Tailwind animations if needed */
+@layer utilities {
+  .animate-shimmer {
+    animation: shimmer 3s infinite linear;
+  }
+}
