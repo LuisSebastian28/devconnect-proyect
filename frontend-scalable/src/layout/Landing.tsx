@@ -220,7 +220,7 @@ export default function Catalog() {
             <h2 className="text-4xl font-bold text-foreground text-balance">
               Invest in the Future with Blockchain-Powered Crowdlending
             </h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto text-pretty">
+            <p className="text-xl text-muted-foreground  text-indigo-600 max-w-2xl mx-auto text-pretty">
               Discover vetted projects, diversify your portfolio, and earn
               competitive returns through our secure Ethereum L2 platform.
             </p>
@@ -230,7 +230,7 @@ export default function Catalog() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <Card>
               <CardContent className="p-6 flex items-center space-x-2">
-                <TrendingUp className="w-5 h-5 text-accent" />
+                <TrendingUp className="w-5 h-5 text-accent text-green-700" />
                 <div>
                   <p className="text-sm text-muted-foreground">Total Funded</p>
                   <p className="text-2xl font-bold">
@@ -241,7 +241,7 @@ export default function Catalog() {
             </Card>
             <Card>
               <CardContent className="p-6 flex items-center space-x-2">
-                <Users className="w-5 h-5 text-accent" />
+                <Users className="w-5 h-5 text-accent text-amber-500" />
                 <div>
                   <p className="text-sm text-muted-foreground">
                     Active Investors
@@ -252,7 +252,7 @@ export default function Catalog() {
             </Card>
             <Card>
               <CardContent className="p-6 flex items-center space-x-2">
-                <Shield className="w-5 h-5 text-accent" />
+                <Shield className="w-5 h-5 text-accent text-blue-800" />
                 <div>
                   <p className="text-sm text-muted-foreground">Success Rate</p>
                   <p className="text-2xl font-bold">

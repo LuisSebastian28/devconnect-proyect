@@ -12,10 +12,10 @@ export function WalletOptions() {
   };
 
   return (
-    <div className="relative inline-block text-left">
+    <div className="relative inline-block text-left ">
       <button
         onClick={() => setOpen((prev) => !prev)}
-        className="flex items-center space-x-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+        className="flex items-center space-x-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition cursor-crosshair"
       >
         <WalletIcon className="h-5 w-5 text-indigo-600" />
         <span>Conect Wallet</span>
