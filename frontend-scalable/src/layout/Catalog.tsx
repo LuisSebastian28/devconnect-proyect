@@ -25,20 +25,15 @@ import { Progress } from "../components/Progress";
 
 function Catalog() {
   const [activeTab, setActiveTab] = useState("marketplace");
+
   return (
     <div>
       <main className="container mx-auto px-4 py-8">
         <div className="space-y-8">
           {/* Hero Section */}
           <div className="text-center space-y-4">
-            <h2 className="text-4xl font-bold text-foreground text-balance">
-              Invest in the Future with Blockchain-Powered Crowdlending
-            </h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto text-pretty">
-              Discover vetted projects, diversify your portfolio, and earn
-              competitive returns through our secure Ethereum L2 platform.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center max-w-md mx-auto">
+            {/* Searchbar Hero */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center max-w-screen mx-auto">
               <div className="relative flex-1 w-full">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                 <Input placeholder="Search projects..." className="pl-10" />
@@ -51,6 +46,14 @@ function Catalog() {
                 Filters
               </Button>
             </div>
+            {/* Content Hero */}
+            <h2 className="text-4xl font-bold text-foreground text-balance">
+              Invest in the Future with Blockchain-Powered Crowdlending
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto text-pretty">
+              Discover vetted projects, diversify your portfolio, and earn
+              competitive returns through our secure Ethereum L2 platform.
+            </p>
           </div>
 
           {/* Stats */}
