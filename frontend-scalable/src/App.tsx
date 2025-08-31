@@ -1,5 +1,4 @@
 import { Navbar } from "./components/Navbar";
-import Catalog from "./layout/Catalog";
 import Landing from "./layout/Landing";
 
 function App() {

@@ -111,7 +111,7 @@ const features = [
   },
 ];
 
-export default function Catalog() {
+export default function Landing() {
   const [projects, setProjects] = useState<any[]>([]);
   const [stats, setStats] = useState({
     totalFunded: 0,
@@ -276,15 +276,6 @@ export default function Catalog() {
 
           {/* Featured Projects */}
           <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h3 className="text-2xl font-bold text-foreground">
-                Featured Projects
-              </h3>
-              <Button variant="outline">
-                View All
-                <ArrowUpRight className="w-4 h-4 ml-2" />
-              </Button>
-            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {projects.slice(0, 3).map((project) => (
