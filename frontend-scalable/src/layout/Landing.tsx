@@ -1,6 +1,3 @@
-import LENDING_FACTORY_ABI from "../lib/ABI/FactoryABI.json";
-import LENDING_PROJECT_ABI from "../lib/ABI/LendingABI.json";
-
 import { useEffect, useState } from "react";
 import { ethers } from "ethers";
 import {
@@ -35,8 +32,10 @@ import {
 } from "lucide-react";
 import { Input } from "../components/ui/Input";
 import Footer from "../components/Footer";
+import LENDING_FACTORY_ABI from "../lib/ABI/FactoryABI.json";
+import LENDING_PROJECT_ABI from "../lib/ABI/LendingABI.json";
 
-const FACTORY_ADDRESS = "0x31f4EbbD96a4795312423B1DF10dDA5A9120Bc78";
+const FACTORY_ADDRESS = "0x3C717aCB71C27Cd32A319197788310e095b02E74";
 
 const entrepreneurBenefits = [
   "Financing without personal guarantees",
