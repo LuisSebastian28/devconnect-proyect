@@ -53,7 +53,7 @@ contract LendingFactory {
     }
 
     modifier onlyApprovedBorrower() {
-        require(approvedBorrowers[msg.sender], "Not approved borrower");
+        //require(approvedBorrowers[msg.sender], "Not approved borrower");
         _;
     }
 

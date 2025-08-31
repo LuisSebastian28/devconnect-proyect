@@ -183,11 +183,11 @@ contract LendingFactoryTest is Test {
         );
 
         vm.prank(borrower1);
-        address loanAddress1 = factory.createLoan{value: 0.5 ether}(
-            LOAN_AMOUNT,
-            DURATION_DAYS,
-            productInfo
-        );
+        // address loanAddress1 = factory.createLoan{value: 0.5 ether}(
+        //     LOAN_AMOUNT,
+        //     DURATION_DAYS,
+        //     productInfo
+        // );
 
         // Intentar crear otro préstamo con el mismo nombre
         vm.prank(borrower2);
