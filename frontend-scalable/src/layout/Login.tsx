@@ -1,4 +1,4 @@
-// src/layout/Register.tsx
+// src/layout/Login.tsx
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/Cards";
@@ -7,7 +7,7 @@ import { Input } from "../components/ui/Input";
 import Separator from "../components/ui/separator";
 import Footer from "../components/Footer";
 import { Navbar } from "../components/Navbar";
-import { Mail, Lock, User, Building, ArrowLeft, Check, Eye, EyeOff, Phone } from "lucide-react";
+import { Phone, ArrowLeft, Eye, EyeOff, Mail, User, Building } from "lucide-react";
 
 // Datos de códigos de país
 const countryCodes = [
@@ -24,33 +24,28 @@ const countryCodes = [
   { code: "+55", country: "Brasil", flag: "🇧🇷" },
 ];
 
-export default function Register() {
+export default function Login() {
   const navigate = useNavigate();
-  const [showPassword, setShowPassword] = useState(false);
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState(countryCodes[7]); // Bolivia por defecto
   const [userType, setUserType] = useState<"investor" | "entrepreneur">("investor");
-  const [formData, setFormData] = useState({
-    fullName: "",
-    email: "",
+  const [loginData, setLoginData] = useState({
     phone: "",
-    password: "",
-    company: "",
-    termsAccepted: false
+    password: ""
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
+    const { name, value } = e.target;
+    setLoginData(prev => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value
+      [name]: value
     }));
   };
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     // Permitir solo números
     const value = e.target.value.replace(/\D/g, '');
-    setFormData(prev => ({
+    setLoginData(prev => ({
       ...prev,
       phone: value
     }));
@@ -58,15 +53,15 @@ export default function Register() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Lógica de registro aquí
-    const fullPhone = `${selectedCountry.code}${formData.phone}`;
-    console.log("Registrando usuario:", { 
+    // Lógica de inicio de sesión aquí
+    const fullPhone = `${selectedCountry.code}${loginData.phone}`;
+    console.log("Iniciando sesión:", { 
       userType, 
-      ...formData, 
-      phone: fullPhone 
+      phone: fullPhone,
+      password: loginData.password
     });
-    // Redirigir al dashboard después del registro exitoso
-    navigate("/explorer");
+    // Redirigir al dashboard después del login exitoso
+    navigate("/dashboard");
   };
 
   const selectCountry = (country: any) => {
@@ -92,10 +87,10 @@ export default function Register() {
           <Card className="border-0 shadow-xl bg-white/90 backdrop-blur-sm">
             <CardHeader className="text-center pb-2">
               <CardTitle className="text-2xl font-bold text-gray-800">
-                Crear tu Cuenta
+                Iniciar Sesión
               </CardTitle>
               <CardDescription className="text-gray-600">
-                Únete a miles de emprendedores e inversionistas
+                Accede a tu cuenta de CrowdLend
               </CardDescription>
             </CardHeader>
 
@@ -129,26 +124,6 @@ export default function Register() {
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4">
-                {/* Nombre Completo */}
-                <div className="space-y-2">
-                  <label htmlFor="fullName" className="text-sm font-medium text-gray-700">
-                    Nombre Completo
-                  </label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                    <Input
-                      id="fullName"
-                      name="fullName"
-                      type="text"
-                      placeholder="Juan Pérez García"
-                      className="pl-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                      value={formData.fullName}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
-                </div>
-
                 {/* Teléfono con selector de país */}
                 <div className="space-y-2">
                   <label htmlFor="phone" className="text-sm font-medium text-gray-700">
@@ -160,7 +135,7 @@ export default function Register() {
                       <button
                         type="button"
                         onClick={() => setShowCountryDropdown(!showCountryDropdown)}
-                        className="flex items-center gap-2 px-3 py-2 h-10 border border-gray-300 rounded-lg bg-white text-gray-700 hover:border-gray-400 focus:border-blue-500 focus:ring-blue-500 focus:outline-none"
+                        className="flex items-center gap-2 px-3 py-2 h-10 border border-gray-300 rounded-lg bg-white text-gray-700 hover:border-gray-400 focus:border-blue-500 focus:ring-blue-500 focus:outline-none min-w-[80px]"
                       >
                         <span>{selectedCountry.flag}</span>
                         <span className="text-sm">{selectedCountry.code}</span>
@@ -177,7 +152,7 @@ export default function Register() {
                               className="flex items-center gap-3 w-full px-3 py-2 text-sm text-gray-700 hover:bg-blue-50"
                             >
                               <span className="text-lg">{country.flag}</span>
-                              <span>{country.country}</span>
+                              <span className="flex-1 text-left">{country.country}</span>
                               <span className="text-blue-600">{country.code}</span>
                             </button>
                           ))}
@@ -194,7 +169,7 @@ export default function Register() {
                         type="tel"
                         placeholder="71234567"
                         className="pl-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                        value={formData.phone}
+                        value={loginData.phone}
                         onChange={handlePhoneChange}
                         required
                       />
@@ -202,50 +177,28 @@ export default function Register() {
                   </div>
                 </div>
 
-                {/* Empresa (solo para emprendedores) */}
-                {userType === "entrepreneur" && (
-                  <div className="space-y-2">
-                    <label htmlFor="company" className="text-sm font-medium text-gray-700">
-                      Nombre de la Empresa
-                    </label>
-                    <div className="relative">
-                      <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                      <Input
-                        id="company"
-                        name="company"
-                        type="text"
-                        placeholder="Mi Empresa S.A."
-                        className="pl-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                        value={formData.company}
-                        onChange={handleInputChange}
-                        required={userType === "entrepreneur"}
-                      />
-                    </div>
-                  </div>
-                )}
-                
                 <Button 
                   type="submit" 
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition-colors"
                   size="lg"
                 >
-                  Crear Cuenta
+                  Iniciar Sesión
                 </Button>
               </form>
 
               <Separator className="my-6 bg-gray-200" />
 
               <div className="text-center">
-                <p className="text-sm text-gray-600">
-                  ¿Ya tienes una cuenta?{" "}
-                  <Link to="/login" className="text-blue-600 font-medium hover:text-blue-800">
-                    Iniciar Sesión
+                <p className="text-sm text-gray-600 mb-4">
+                  ¿No tienes una cuenta?{" "}
+                  <Link to="/register" className="text-blue-600 font-medium hover:text-blue-800">
+                    Regístrate ahora
                   </Link>
                 </p>
+                
               </div>
             </CardContent>
           </Card>
-
         </div>
       </main>
 
@@ -254,6 +207,7 @@ export default function Register() {
   );
 }
 
+// Componente ChevronDown para el selector
 function ChevronDown({ className }: { className?: string }) {
   return (
     <svg 
@@ -263,6 +217,20 @@ function ChevronDown({ className }: { className?: string }) {
       viewBox="0 0 24 24"
     >
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+    </svg>
+  );
+}
+
+// Componente Check
+function Check({ className }: { className?: string }) {
+  return (
+    <svg 
+      className={className} 
+      fill="none" 
+      stroke="currentColor" 
+      viewBox="0 0 24 24"
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
     </svg>
   );
 }

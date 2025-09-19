@@ -122,11 +122,7 @@ const Footer: FC = () => {
           </div>
         </div>
 
-        <div className="border-t border-slate-800 pt-8">
-          <p className="text-center text-sm text-slate-400">
-            © {currentYear} CrowdLend. All rights reserved.
-          </p>
-        </div>
+
       </div>
     </footer>
   );
