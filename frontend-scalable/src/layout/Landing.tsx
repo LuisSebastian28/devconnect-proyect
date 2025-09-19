@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { ethers } from "ethers";
 import {
   Card,
@@ -27,7 +28,6 @@ import {
   BarChart3,
   Star,
   MapPin,
-  ArrowUpRight,
   Lock,
 } from "lucide-react";
 import { Input } from "../components/ui/Input";
@@ -112,6 +112,7 @@ const features = [
 ];
 
 export default function Landing() {
+  const navigate = useNavigate();
   const [projects, setProjects] = useState<any[]>([]);
   const [stats, setStats] = useState({
     totalFunded: 0,
@@ -556,6 +557,7 @@ export default function Landing() {
                   <Button
                     size="lg"
                     className="group bg-white text-indigo-600 hover:bg-white/90"
+                     onClick={() => navigate("/register")}
                   >
                     Register Now
                     <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
