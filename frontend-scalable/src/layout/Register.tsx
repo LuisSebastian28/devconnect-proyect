@@ -1,4 +1,3 @@
-// src/layout/Register.tsx
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/Cards";
@@ -7,9 +6,10 @@ import { Input } from "../components/ui/Input";
 import Separator from "../components/ui/separator";
 import Footer from "../components/Footer";
 import { Navbar } from "../components/Navbar";
-import { Mail, Lock, User, Building, ArrowLeft, Check, Eye, EyeOff, Phone } from "lucide-react";
+import { Mail, Lock, User, Building, ArrowLeft, Phone, Loader } from "lucide-react";
+import { authService } from "../services/authService";
+import type { RegisterData } from "../services/authService";
 
-// Datos de códigos de país
 const countryCodes = [
   { code: "+1", country: "Estados Unidos", flag: "🇺🇸" },
   { code: "+52", country: "México", flag: "🇲🇽" },
@@ -26,29 +26,30 @@ const countryCodes = [
 
 export default function Register() {
   const navigate = useNavigate();
-  const [showPassword, setShowPassword] = useState(false);
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState(countryCodes[7]); // Bolivia por defecto
   const [userType, setUserType] = useState<"investor" | "entrepreneur">("investor");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
     phone: "",
     password: "",
     company: "",
-    termsAccepted: false
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value
+      [name]: value
     }));
+    setError(null); 
   };
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Permitir solo números
     const value = e.target.value.replace(/\D/g, '');
     setFormData(prev => ({
       ...prev,
@@ -56,17 +57,41 @@ export default function Register() {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Lógica de registro aquí
-    const fullPhone = `${selectedCountry.code}${formData.phone}`;
-    console.log("Registrando usuario:", { 
-      userType, 
-      ...formData, 
-      phone: fullPhone 
-    });
-    // Redirigir al dashboard después del registro exitoso
-    navigate("/explorer");
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const fullPhone = `${selectedCountry.code}${formData.phone}`;
+      const userData: RegisterData = {
+        fullName: formData.fullName,
+        phone: fullPhone,
+        userType,
+        company: userType === 'entrepreneur' ? formData.company : undefined
+      };
+
+      let response;
+      if (userType === 'investor') {
+        response = await authService.registerInvestor(userData);
+      } else {
+        response = await authService.registerEntrepreneur(userData);
+      }
+
+      console.log("Registro exitoso:", response);
+      
+      navigate("/dashboard", { 
+        state: { 
+          user: response.user
+        }
+      });
+
+    } catch (error: any) {
+      console.error("Error en registro:", error);
+      setError(error.response?.data?.message || "Error en el registro. Intenta nuevamente.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const selectCountry = (country: any) => {
@@ -128,11 +153,17 @@ export default function Register() {
                 </Button>
               </div>
 
+              {error && (
+                <div className="mb-4 p-3 bg-red-100 border border-red-200 text-red-700 rounded-lg text-sm">
+                  {error}
+                </div>
+              )}
+
               <form onSubmit={handleSubmit} className="space-y-4">
                 {/* Nombre Completo */}
                 <div className="space-y-2">
                   <label htmlFor="fullName" className="text-sm font-medium text-gray-700">
-                    Nombre Completo
+                    Nombre Completo *
                   </label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -145,6 +176,7 @@ export default function Register() {
                       value={formData.fullName}
                       onChange={handleInputChange}
                       required
+                      minLength={2}
                     />
                   </div>
                 </div>
@@ -152,7 +184,7 @@ export default function Register() {
                 {/* Teléfono con selector de país */}
                 <div className="space-y-2">
                   <label htmlFor="phone" className="text-sm font-medium text-gray-700">
-                    Número de Celular
+                    Número de Celular *
                   </label>
                   <div className="flex gap-2">
                     {/* Selector de código de país */}
@@ -160,7 +192,7 @@ export default function Register() {
                       <button
                         type="button"
                         onClick={() => setShowCountryDropdown(!showCountryDropdown)}
-                        className="flex items-center gap-2 px-3 py-2 h-10 border border-gray-300 rounded-lg bg-white text-gray-700 hover:border-gray-400 focus:border-blue-500 focus:ring-blue-500 focus:outline-none"
+                        className="flex items-center gap-2 px-3 py-2 h-10 border border-gray-300 rounded-lg bg-white text-gray-700 hover:border-gray-400 focus:border-blue-500 focus:ring-blue-500 focus:outline-none min-w-[85px]"
                       >
                         <span>{selectedCountry.flag}</span>
                         <span className="text-sm">{selectedCountry.code}</span>
@@ -177,7 +209,7 @@ export default function Register() {
                               className="flex items-center gap-3 w-full px-3 py-2 text-sm text-gray-700 hover:bg-blue-50"
                             >
                               <span className="text-lg">{country.flag}</span>
-                              <span>{country.country}</span>
+                              <span className="flex-1 text-left">{country.country}</span>
                               <span className="text-blue-600">{country.code}</span>
                             </button>
                           ))}
@@ -197,6 +229,8 @@ export default function Register() {
                         value={formData.phone}
                         onChange={handlePhoneChange}
                         required
+                        minLength={7}
+                        maxLength={10}
                       />
                     </div>
                   </div>
@@ -206,7 +240,7 @@ export default function Register() {
                 {userType === "entrepreneur" && (
                   <div className="space-y-2">
                     <label htmlFor="company" className="text-sm font-medium text-gray-700">
-                      Nombre de la Empresa
+                      Nombre de la Empresa *
                     </label>
                     <div className="relative">
                       <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -226,10 +260,18 @@ export default function Register() {
                 
                 <Button 
                   type="submit" 
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition-colors"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition-colors disabled:opacity-50"
                   size="lg"
+                  disabled={isLoading}
                 >
-                  Crear Cuenta
+                  {isLoading ? (
+                    <>
+                      <Loader className="w-4 h-4 mr-2 animate-spin" />
+                      Creando cuenta...
+                    </>
+                  ) : (
+                    "Crear Cuenta"
+                  )}
                 </Button>
               </form>
 
@@ -245,7 +287,6 @@ export default function Register() {
               </div>
             </CardContent>
           </Card>
-
         </div>
       </main>
 
