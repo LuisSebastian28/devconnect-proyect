@@ -47,13 +47,19 @@ export default function NumberVerifier({ expectedNumber = 5 }: NumberVerifierPro
     }
 
     try {
-      const response = await fetch('http://localhost:3001/api/verify-number', {
+      const response = await fetch('http://localhost:3001/api/livy/verify-number', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ number }),
       });
+
+      // ✅ PRIMERO verifica si la respuesta HTTP es exitosa
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Error ${response.status}`);
+      }
 
       const data: VerificationResponse = await response.json();
 
@@ -69,7 +75,8 @@ export default function NumberVerifier({ expectedNumber = 5 }: NumberVerifierPro
 
     } catch (error) {
       console.error('Error al verificar el número:', error);
-      setMessage('⚠️ Error al conectar con el servidor de verificación');
+      // ✅ MEJOR MANEJO DE ERRORES
+      setMessage(error instanceof Error ? `⚠️ ${error.message}` : '⚠️ Error inesperado');
       setIsCorrect(false);
     } finally {
       setIsLoading(false);
