@@ -2,6 +2,7 @@
   "name": "livy-backend",
   "version": "1.0.0",
   "description": "",
+  "types": "module",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -9,11 +10,13 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
+  "type": "module",
   "dependencies": {
+    "@getpara/server-sdk": "^2.0.0-alpha.50",
     "@livylabs/sdk": "^0.0.5",
     "cors": "^2.8.5",
     "dotenv": "^17.2.2",
+    "ethers": "^6.15.0",
     "express": "^5.1.0"
   }
 }
