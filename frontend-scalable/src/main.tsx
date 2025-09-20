@@ -20,3 +20,19 @@ createRoot(document.getElementById("root")!).render(
     </WagmiProvider>
   </StrictMode>
 );
+
+// import { StrictMode } from "react";
+// import { createRoot } from "react-dom/client";
+// import "./index.css";
+// import NumberVerifier from "./components/NumberVerifier"; // Asegúrate de que la ruta sea correcta
+
+// Solo necesitamos Buffer si vamos a usar wagmi. Si no, podemos eliminarlo.
+// import { Buffer } from "buffer";
+
+// globalThis.Buffer = Buffer;
+
+// createRoot(document.getElementById("root")!).render(
+//   <StrictMode>
+//     <NumberVerifier />
+//   </StrictMode>
+// );
