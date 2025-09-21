@@ -13,13 +13,9 @@ import { Button } from "../components/Button";
 import {
   ArrowRight,
   Badge,
-  Check,
   Filter,
-  Globe2,
   Mail,
   Search,
-  Users2,
-  Zap,
 } from "lucide-react";
 import {
   TrendingUp,
@@ -28,7 +24,6 @@ import {
   BarChart3,
   Star,
   MapPin,
-  Lock,
 } from "lucide-react";
 import { Input } from "../components/ui/Input";
 import Footer from "../components/Footer";
@@ -36,20 +31,6 @@ import LENDING_FACTORY_ABI from "../lib/ABI/FactoryABI.json";
 import LENDING_PROJECT_ABI from "../lib/ABI/LendingABI.json";
 
 const FACTORY_ADDRESS = "0x3C717aCB71C27Cd32A319197788310e095b02E74";
-
-const entrepreneurBenefits = [
-  "Financing without personal guarantees",
-  "Access to capital within 72 hours",
-  "International contact network",
-  "Logistics and trade consulting",
-];
-
-const investorBenefits = [
-  "Returns above 12% annually",
-  "Portfolio diversification",
-  "Investment from $1,000 USD",
-  "Full operational transparency",
-];
 
 const steps = [
   {
@@ -75,41 +56,6 @@ const steps = [
   },
 ];
 
-const features = [
-  {
-    icon: Shield,
-    title: "Secure Investments",
-    description:
-      "Smart contracts that guarantee transparency and security in every transaction",
-  },
-  {
-    icon: Zap,
-    title: "Agile Process",
-    description: "From proposal to funding in less than 72 hours",
-  },
-  {
-    icon: BarChart3,
-    title: "Market Analysis",
-    description: "Advanced tools to evaluate demand and project returns",
-  },
-  {
-    icon: Lock,
-    title: "Real Guarantees",
-    description:
-      "Backed by inventory and merchandise insurance to minimize risks",
-  },
-  {
-    icon: Globe2,
-    title: "Global Reach",
-    description: "Access to international products and markets without borders",
-  },
-  {
-    icon: Users2,
-    title: "Active Community",
-    description:
-      "Network of verified and committed entrepreneurs and investors",
-  },
-];
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -147,7 +93,7 @@ export default function Landing() {
       loanAddresses.map(async (addr) => {
         const loan = new ethers.Contract(addr, LENDING_PROJECT_ABI, provider);
 
-        const [info, loanAmount, duration, interestRate, progress] =
+        const [info, loanAmount, duration, progress] =
           await Promise.all([
             loan.getProductInfo(),
             loan.loanAmount(),
