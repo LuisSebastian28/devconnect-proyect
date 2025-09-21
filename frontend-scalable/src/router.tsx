@@ -1,17 +1,17 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
-import App from "./App";
 import Explorer from "./layout/Explorer";
 import Register from "./layout/Register";
 import Login from "./layout/Login";
 import PymeDashboard from "./layout/PymeDashboard";
 import { CreateLoanRequest } from "./layout/CreateLoanRequest";
 import { RequestSuccess } from "./layout/RequestSuccess";
+import Landing from "./layout/Landing";
 
 
 export const router = createBrowserRouter([
   // login route (sin protección)
   //{ path: "/", element: <App /> },
-  { path: "/", element: <Explorer /> },
+  { path: "/", element: <Landing /> },
   { path: "/explorer", element: <Explorer /> },
   { path: "/login", element: <Login /> },
   { path: "/register", element: <Register /> },

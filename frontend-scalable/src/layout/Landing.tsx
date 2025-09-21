@@ -29,33 +29,33 @@ import { Input } from "../components/ui/Input";
 import Footer from "../components/Footer";
 import LENDING_FACTORY_ABI from "../lib/ABI/FactoryABI.json";
 import LENDING_PROJECT_ABI from "../lib/ABI/LendingABI.json";
+import { Navbar } from "../components/Navbar";
 
 const FACTORY_ADDRESS = "0x3C717aCB71C27Cd32A319197788310e095b02E74";
 
 const steps = [
   {
     icon: Search,
-    title: "Identify Opportunities",
+    title: "Identificar Oportunidades",
     description:
-      "Entrepreneurs present products with proven demand and detailed import plans",
+      "Emprendedores presentan productos con demanda probada y planes de importación detallados",
     color: "text-red-400",
   },
   {
     icon: Users,
-    title: "Collective Investment",
+    title: "Inversión Colectiva",
     description:
-      "Multiple investors fund the operation, diversifying risk and maximizing opportunities",
+      "Múltiples inversionistas financian la operación, diversificando riesgos y maximizando oportunidades",
     color: "text-yellow-500",
   },
   {
     icon: TrendingUp,
-    title: "Guaranteed Returns",
+    title: "Rentabilidad Garantizada",
     description:
-      "Product commercialization generates profits distributed proportionally among investors",
+      "La comercialización del producto genera ganancias distribuidas proporcionalmente entre los inversionistas",
     color: "text-green-400",
   },
 ];
-
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -109,7 +109,7 @@ export default function Landing() {
         totalROI += Number(info.expectedROI);
         if (progress.completed === progress.total) successful++;
 
-        // 🔹 Mock de backers (puedes reemplazar con lenders.length)
+        // 🔹 Mock de inversionistas (puedes reemplazar con lenders.length)
         const backers = Math.floor(Math.random() * 50) + 1;
         Array.from({ length: backers }).forEach((_, i) =>
           investorsSet.add(`${addr}-${i}`)
@@ -122,13 +122,13 @@ export default function Landing() {
           category: info.category,
           location: info.originCountry,
           roi: `${info.expectedROI.toString()}%`,
-          duration: `${duration.toString()} days`,
+          duration: `${duration.toString()} días`,
           funded: fundedPercent,
           target: Number(ethers.formatEther(loanAmount)),
           rating: 4.5, // mock
           backers,
           image: "/placeholder.svg",
-          risk: "Medium",
+          risk: "Medio",
         };
       })
     );
@@ -145,6 +145,7 @@ export default function Landing() {
 
   return (
     <div>
+      <Navbar/>
       <main className="container mx-auto px-4 py-8 space-y-12">
         <div className="space-y-8">
           {/* Hero Section */}
@@ -153,23 +154,22 @@ export default function Landing() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center max-w-screen mx-auto">
               <div className="relative flex-1 w-full">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                <Input placeholder="Search projects..." className="pl-10" />
+                <Input placeholder="Buscar proyectos..." className="pl-10" />
               </div>
               <Button
                 size="lg"
                 className="w-full sm:w-auto bg-black text-white"
               >
                 <Filter className="w-4 h-4 mr-2 text-white" />
-                Filters
+                Filtros
               </Button>
             </div>
             {/* Content Hero */}
             <h2 className="text-4xl font-bold text-foreground text-balance">
-              Invest in the Future with Blockchain-Powered Crowdlending
+              Invierte en el Futuro con Crowdlending Potenciado por Blockchain
             </h2>
             <p className="text-xl text-muted-foreground  text-indigo-600 max-w-2xl mx-auto text-pretty">
-              Discover vetted projects, diversify your portfolio, and earn
-              competitive returns through our secure Ethereum L2 platform.
+              Descubre proyectos verificados, diversifica tu portafolio y genera rendimientos competitivos a través de nuestra plataforma.
             </p>
           </div>
 
@@ -179,7 +179,7 @@ export default function Landing() {
               <CardContent className="p-6 flex items-center space-x-2">
                 <TrendingUp className="w-5 h-5 text-accent text-green-700" />
                 <div>
-                  <p className="text-sm text-muted-foreground">Total Funded</p>
+                  <p className="text-sm text-muted-foreground">Total Financiado</p>
                   <p className="text-2xl font-bold">
                     ${stats.totalFunded.toLocaleString()}
                   </p>
@@ -191,7 +191,7 @@ export default function Landing() {
                 <Users className="w-5 h-5 text-accent text-amber-500" />
                 <div>
                   <p className="text-sm text-muted-foreground">
-                    Active Investors
+                    Inversionistas Activos
                   </p>
                   <p className="text-2xl font-bold">{stats.activeInvestors}</p>
                 </div>
@@ -201,7 +201,7 @@ export default function Landing() {
               <CardContent className="p-6 flex items-center space-x-2">
                 <Shield className="w-5 h-5 text-accent text-blue-800" />
                 <div>
-                  <p className="text-sm text-muted-foreground">Success Rate</p>
+                  <p className="text-sm text-muted-foreground">Tasa de Éxito</p>
                   <p className="text-2xl font-bold">
                     {stats.successRate.toFixed(1)}%
                   </p>
@@ -212,7 +212,7 @@ export default function Landing() {
               <CardContent className="p-6 flex items-center space-x-2">
                 <BarChart3 className="w-5 h-5 text-accent text-red-600" />
                 <div>
-                  <p className="text-sm text-muted-foreground">Avg. ROI</p>
+                  <p className="text-sm text-muted-foreground">ROI Promedio</p>
                   <p className="text-2xl font-bold">
                     {stats.avgROI.toFixed(1)}%
                   </p>
@@ -232,7 +232,7 @@ export default function Landing() {
                 >
                   <div className="aspect-video relative">
                     <Badge className="absolute top-3 right-3">
-                      {project.risk} Risk
+                      Riesgo {project.risk}
                     </Badge>
                   </div>
                   <CardHeader>
@@ -254,13 +254,13 @@ export default function Landing() {
                   <CardContent className="space-y-4">
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
-                        <p className="text-muted-foreground">Expected ROI</p>
+                        <p className="text-muted-foreground">ROI Esperado</p>
                         <p className="font-semibold text-green-600">
                           {project.roi}
                         </p>
                       </div>
                       <div>
-                        <p className="text-muted-foreground">Duration</p>
+                        <p className="text-muted-foreground">Duración</p>
                         <p className="font-semibold">{project.duration}</p>
                       </div>
                       <div className="col-span-2 flex items-center space-x-1 text-muted-foreground">
@@ -271,7 +271,7 @@ export default function Landing() {
 
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Progress</span>
+                        <span className="text-muted-foreground">Progreso</span>
                         <span className="font-medium">
                           {project.funded.toFixed(1)}%
                         </span>
@@ -284,13 +284,13 @@ export default function Landing() {
                             (project.target * project.funded) /
                             100
                           ).toLocaleString()}{" "}
-                          raised
+                          recaudado
                         </span>
-                        <span>{project.backers} backers</span>
+                        <span>{project.backers} inversionistas</span>
                       </div>
                     </div>
 
-                    <Button className="w-full">Invest Now</Button>
+                    <Button className="w-full">Invertir Ahora</Button>
                   </CardContent>
                 </Card>
               ))}
@@ -302,10 +302,10 @@ export default function Landing() {
             <div className="container mx-auto">
               <div className="text-center mb-16">
                 <h2 className="text-4xl md:text-5xl font-bold mb-4 text-slate-900">
-                  How It Works
+                  Cómo Funciona
                 </h2>
                 <p className="text-xl text-slate-600 max-w-2xl mx-auto">
-                  A simple and transparent process to finance successful imports
+                  Un proceso simple y transparente para financiar importaciones exitosas
                 </p>
               </div>
 
@@ -373,11 +373,10 @@ export default function Landing() {
             <div className="container mx-auto px-6 relative z-10">
               <div className="max-w-3xl mx-auto text-center">
                 <h2 className="text-4xl md:text-5xl font-bold mb-6 text-white">
-                  Start Your Journey to Financial Success
+                  Comienza Tu Camino al Éxito Financiero
                 </h2>
                 <p className="text-xl text-white/90 mb-10">
-                  Join thousands of entrepreneurs and investors who are already
-                  transforming international trade
+                  Únete a miles de emprendedores e inversionistas que ya están transformando el comercio internacional
                 </p>
 
                 <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
@@ -386,7 +385,7 @@ export default function Landing() {
                     className="group bg-white text-indigo-600 hover:bg-white/90"
                      onClick={() => navigate("/register")}
                   >
-                    Register Now
+                    Regístrate Ahora
                     <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </Button>
                   <Button
@@ -394,12 +393,12 @@ export default function Landing() {
                     className="bg-white/10 border-2 border-white/30 text-white hover:bg-white/20"
                   >
                     <Mail className="mr-2 w-4 h-4" />
-                    Contact Advisor
+                    Contactar Asesor
                   </Button>
                 </div>
 
                 <p className="text-sm text-white/70">
-                  No commitment • Free registration • Personal advisory
+                  Sin compromiso • Registro gratuito • Asesoría personalizada
                 </p>
               </div>
             </div>

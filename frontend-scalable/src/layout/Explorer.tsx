@@ -37,7 +37,7 @@ interface Project {
   location: string
   historicalPerformance: string
   rating: number
-  risk: "Low" | "Medium" | "High"
+  risk: "Bajo" | "Medio" | "Alto"
   image?: string
   fullDescription?: string
   keyMetrics?: {
@@ -52,15 +52,14 @@ interface Project {
   }[]
 }
 
-
 const featuredProjects: Project[] = [
   {
     id: "1",
-    title: "Downtown Mixed-Use Development",
-    description: "Premium residential and commercial complex in prime downtown location",
-    category: "Real Estate",
+    title: "Desarrollo de Uso Mixto en el Centro",
+    description: "Complejo residencial y comercial premium en ubicación céntrica privilegiada",
+    category: "Bienes Raíces",
     roi: "18.5%",
-    duration: "24 months",
+    duration: "24 meses",
     minInvestment: 5000,
     funded: 78,
     target: 2500000,
@@ -68,29 +67,29 @@ const featuredProjects: Project[] = [
     location: "Austin, TX",
     historicalPerformance: "+22.3%",
     rating: 4.8,
-    risk: "Medium",
+    risk: "Medio",
     image: "/modern-downtown-building-development.png",
     fullDescription:
-      "This premium mixed-use development project represents a unique opportunity to invest in Austin's rapidly growing downtown core. The project includes 120 luxury residential units and 15,000 sq ft of premium retail space.",
+      "Este proyecto de desarrollo de uso mixto premium representa una oportunidad única para invertir en el centro de Austin, que está experimentando un rápido crecimiento. El proyecto incluye 120 unidades residenciales de lujo y 15,000 pies cuadrados de espacio comercial premium.",
     keyMetrics: {
       totalRaised: 1950000,
       averageInvestment: 12500,
       completionRate: 95,
     },
     timeline: [
-      { phase: "Planning & Permits", description: "Secured all necessary permits and approvals", completed: true },
-      { phase: "Foundation & Structure", description: "Complete foundation and structural framework", completed: true },
-      { phase: "Interior & Finishing", description: "Interior build-out and finishing work", completed: false },
-      { phase: "Final Inspection", description: "Final inspections and occupancy permits", completed: false },
+      { phase: "Planificación y Permisos", description: "Obtención de todos los permisos y aprobaciones necesarias", completed: true },
+      { phase: "Cimentación y Estructura", description: "Completar cimentación y estructura", completed: true },
+      { phase: "Interiores y Acabados", description: "Trabajos de interior y acabados", completed: false },
+      { phase: "Inspección Final", description: "Inspecciones finales y permisos de ocupación", completed: false },
     ],
   },
   {
     id: "2",
-    title: "AI-Powered Healthcare Platform",
-    description: "Revolutionary diagnostic platform using machine learning for early disease detection",
-    category: "Technology",
+    title: "Plataforma de Salud con Inteligencia Artificial",
+    description: "Plataforma de diagnóstico revolucionaria que utiliza aprendizaje automático para la detección temprana de enfermedades",
+    category: "Tecnología",
     roi: "25.2%",
-    duration: "18 months",
+    duration: "18 meses",
     minInvestment: 2500,
     funded: 92,
     target: 1800000,
@@ -98,10 +97,10 @@ const featuredProjects: Project[] = [
     location: "San Francisco, CA",
     historicalPerformance: "+31.7%",
     rating: 4.9,
-    risk: "High",
+    risk: "Alto",
     image: "/ai-healthcare-technology-platform.png",
     fullDescription:
-      "Our AI-powered healthcare platform leverages advanced machine learning algorithms to provide early disease detection and personalized treatment recommendations, revolutionizing preventive healthcare.",
+      "Nuestra plataforma de salud con IA aprovecha algoritmos avanzados de aprendizaje automático para proporcionar detección temprana de enfermedades y recomendaciones de tratamiento personalizadas, revolucionando la atención médica preventiva.",
     keyMetrics: {
       totalRaised: 1656000,
       averageInvestment: 8157,
@@ -112,15 +111,14 @@ const featuredProjects: Project[] = [
 
 const getCategoryIcon = (category: string) => {
   const categoryMap: { [key: string]: any } = {
-    "Real Estate": Building2,
-    Technology: Zap,
-    "Green Energy": Leaf,
-    Healthcare: Heart,
-    Education: GraduationCap,
+    "Bienes Raíces": Building2,
+    "Tecnología": Zap,
+    "Energía Verde": Leaf,
+    "Salud": Heart,
+    "Educación": GraduationCap,
   }
   return categoryMap[category] || Briefcase
 }
-
 
 const SingleProjectView = ({ project, onBack }: { project: Project; onBack: () => void }) => {
   if (!project) {
@@ -128,7 +126,7 @@ const SingleProjectView = ({ project, onBack }: { project: Project; onBack: () =
       <div className="flex justify-center items-center h-96">
         <Button variant="outline" size="sm" onClick={onBack}>
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Projects
+          Volver a Proyectos
         </Button>
       </div>
     );
@@ -145,7 +143,7 @@ const SingleProjectView = ({ project, onBack }: { project: Project; onBack: () =
       <div className="flex items-center gap-4">
         <Button variant="outline" size="sm" onClick={onBack}>
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Projects
+          Volver a Proyectos
         </Button>
         <div className="flex items-center gap-2">
           <IconComponent className="w-5 h-5 text-muted-foreground" />
@@ -185,7 +183,7 @@ const SingleProjectView = ({ project, onBack }: { project: Project; onBack: () =
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <Calendar className="w-5 h-5 mr-2" />
-                  Project Timeline
+                  Cronograma del Proyecto
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -213,50 +211,50 @@ const SingleProjectView = ({ project, onBack }: { project: Project; onBack: () =
         <div className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Investment Details</CardTitle>
+              <CardTitle>Detalles de Inversión</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm text-muted-foreground">Expected ROI</p>
+                  <p className="text-sm text-muted-foreground">ROI Esperado</p>
                   <p className="text-2xl font-bold text-green-600">{project.roi}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Duration</p>
+                  <p className="text-sm text-muted-foreground">Duración</p>
                   <p className="text-2xl font-bold">{project.duration}</p>
                 </div>
               </div>
 
               <div>
-                <p className="text-sm text-muted-foreground">Minimum Investment</p>
+                <p className="text-sm text-muted-foreground">Inversión Mínima</p>
                 <p className="text-2xl font-bold">${project.minInvestment.toLocaleString()}</p>
               </div>
 
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Funding Progress</span>
+                  <span className="text-muted-foreground">Progreso de Financiación</span>
                   <span className="font-medium">{project.funded}%</span>
                 </div>
                 <Progress value={project.funded} className="h-3" />
                 <div className="flex justify-between text-sm text-muted-foreground">
-                  <span>${((project.target * project.funded) / 100).toLocaleString()} raised</span>
-                  <span>{project.backers} backers</span>
+                  <span>${((project.target * project.funded) / 100).toLocaleString()} recaudado</span>
+                  <span>{project.backers} inversionistas</span>
                 </div>
               </div>
 
               <Button className="w-full" size="lg">
                 <DollarSign className="w-4 h-4 mr-2" />
-                Invest Now
+                Invertir Ahora
               </Button>
 
               <div className="flex gap-2">
                 <Button variant="outline" className="flex-1 bg-transparent">
                   <BarChart3 className="w-4 h-4 mr-2" />
-                  Analytics
+                  Análisis
                 </Button>
                 <Button variant="outline" className="flex-1 bg-transparent">
                   <Star className="w-4 h-4 mr-2" />
-                  Favorite
+                  Favorito
                 </Button>
               </div>
             </CardContent>
@@ -268,20 +266,20 @@ const SingleProjectView = ({ project, onBack }: { project: Project; onBack: () =
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <Target className="w-5 h-5 mr-2" />
-                  Key Metrics
+                  Métricas Clave
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Total Raised</span>
+                  <span className="text-sm text-muted-foreground">Total Recaudado</span>
                   <span className="font-medium">${project.keyMetrics.totalRaised.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Avg Investment</span>
+                  <span className="text-sm text-muted-foreground">Inversión Promedio</span>
                   <span className="font-medium">${project.keyMetrics.averageInvestment.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Completion Rate</span>
+                  <span className="text-sm text-muted-foreground">Tasa de Finalización</span>
                   <span className="font-medium">{project.keyMetrics.completionRate}%</span>
                 </div>
               </CardContent>
@@ -301,7 +299,7 @@ const SingleProjectView = ({ project, onBack }: { project: Project; onBack: () =
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <TrendingUp className="w-4 h-4 text-green-600" />
-                    <span className="text-sm">Historical Performance</span>
+                    <span className="text-sm">Rendimiento Histórico</span>
                   </div>
                   <span className="text-sm font-medium text-green-600">{project.historicalPerformance}</span>
                 </div>
@@ -336,7 +334,7 @@ export default function InvestmentProjects() {
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-              <Input placeholder="Search projects by name, category, or location..." className="pl-10" />
+              <Input placeholder="Buscar proyectos por nombre, categoría o ubicación..." className="pl-10" />
             </div>
           </div>
 
@@ -381,24 +379,24 @@ export default function InvestmentProjects() {
                         <p className="font-semibold text-green-600">{project.roi}</p>
                       </div>
                       <div>
-                        <p className="text-muted-foreground">Duration</p>
+                        <p className="text-muted-foreground">Duración</p>
                         <p className="font-semibold">{project.duration}</p>
                       </div>
                       <div>
-                        <p className="text-muted-foreground">Min. Investment</p>
+                        <p className="text-muted-foreground">Inversión Mín.</p>
                         <p className="font-semibold">${project.minInvestment.toLocaleString()}</p>
                       </div>
                     </div>
 
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Progress</span>
+                        <span className="text-muted-foreground">Progreso</span>
                         <span className="font-medium">{project.funded}%</span>
                       </div>
                       <Progress value={project.funded} className="h-2" />
                       <div className="flex justify-between text-xs text-muted-foreground">
-                        <span>${((project.target * project.funded) / 100).toLocaleString()} raised</span>
-                        <span>{project.backers} backers</span>
+                        <span>${((project.target * project.funded) / 100).toLocaleString()} recaudado</span>
+                        <span>{project.backers} inversionistas</span>
                       </div>
                     </div>
 
@@ -421,7 +419,7 @@ export default function InvestmentProjects() {
                           // Handle direct investment
                         }}
                       >
-                        Invest Now
+                        Invertir Ahora
                       </Button>
                       <Button variant="outline" size="sm" onClick={(e) => e.stopPropagation()}>
                         <BarChart3 className="w-4 h-4" />
@@ -439,7 +437,7 @@ export default function InvestmentProjects() {
           {/* Load More */}
           <div className="text-center pt-6">
             <Button variant="outline" size="lg">
-              Load More Projects
+              Cargar Más Proyectos
             </Button>
           </div>
         </div>

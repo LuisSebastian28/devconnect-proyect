@@ -21,44 +21,42 @@ const socialLinks: SocialLink[] = [
   {
     icon: <Twitter className="w-4 h-4" />,
     href: "#",
-    ariaLabel: "Follow us on Twitter",
+    ariaLabel: "Síguenos en Twitter",
   },
   {
     icon: <Linkedin className="w-4 h-4" />,
     href: "#",
-    ariaLabel: "Follow us on LinkedIn",
+    ariaLabel: "Síguenos en LinkedIn",
   },
   {
     icon: <Github className="w-4 h-4" />,
     href: "#",
-    ariaLabel: "Follow us on GitHub",
+    ariaLabel: "Síguenos en GitHub",
   },
 ];
 
 const footerSections: FooterSection[] = [
   {
-    title: "Platform",
+    title: "Plataforma",
     links: [
-      { text: "How It Works", href: "#" },
-      { text: "For Entrepreneurs", href: "#" },
-      { text: "For Investors", href: "#" },
-      { text: "Success Stories", href: "#" },
+      { text: "Cómo Funciona", href: "#" },
+      { text: "Para Emprendedores", href: "#" },
+      { text: "Para Inversionistas", href: "#" },
+      { text: "Casos de Éxito", href: "#" },
     ],
   },
   {
     title: "Legal",
     links: [
-      { text: "Terms and Conditions", href: "#" },
-      { text: "Privacy Policy", href: "#" },
-      { text: "Security", href: "#" },
-      { text: "Compliance", href: "#" },
+      { text: "Términos y Condiciones", href: "#" },
+      { text: "Política de Privacidad", href: "#" },
+      { text: "Seguridad", href: "#" },
+      { text: "Cumplimiento", href: "#" },
     ],
   },
 ];
 
 const Footer: FC = () => {
-  const currentYear = new Date().getFullYear();
-
   return (
     <footer className="bg-slate-900 text-white py-12 shadow-lg border-t border-slate-800">
       <div className="container mx-auto px-6">
@@ -70,11 +68,11 @@ const Footer: FC = () => {
                 <DollarSign className="w-5 h-5 text-white" />
               </div>
               <span className="text-xl font-bold text-foreground">
-                CrowdLend
+                Mañakuna
               </span>
             </div>
             <p className="text-slate-300 text-xs mt-4">
-              Decentralized financing platform for global imports
+              Plataforma descentralizada de financiamiento para importaciones globales
             </p>
           </div>
 
@@ -101,7 +99,7 @@ const Footer: FC = () => {
 
           {/* Contact */}
           <div>
-            <h4 className="font-semibold mb-4 text-indigo-400">Contact</h4>
+            <h4 className="font-semibold mb-4 text-indigo-400">Contacto</h4>
             <p className="text-sm text-slate-300 mb-4">
               varor.joseroberto@gmail.com
               <br />
@@ -121,8 +119,6 @@ const Footer: FC = () => {
             </div>
           </div>
         </div>
-
-
       </div>
     </footer>
   );
