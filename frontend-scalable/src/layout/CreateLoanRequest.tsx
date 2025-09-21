@@ -6,10 +6,11 @@ import { Button } from "../components/Button";
 import { Input } from "../components/ui/Input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/Cards";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/Select";
-import { ArrowLeft, DollarSign, FileText, Building2, Zap, Leaf, Heart, GraduationCap, Loader2 } from "lucide-react";
+import { ArrowLeft, DollarSign, FileText, Building2, Zap, Leaf, Heart, GraduationCap, Loader2, CheckCircle, XCircle } from "lucide-react";
 import { Navbar } from "../components/Navbar";
 import Footer from "../components/Footer";
 import LENDING_FACTORY_ABI from "../lib/ABI/FactoryABI.json";
+import FileHashCalculator from "../components/FileHashCalculator";
 
 const FACTORY_ADDRESS = "0x3C717aCB71C27Cd32A319197788310e095b02E74";
 
@@ -35,6 +36,8 @@ export const CreateLoanRequest = () => {
   const { address, isConnected } = useAccount();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [documentVerified, setDocumentVerified] = useState(false);
+  const [verificationResult, setVerificationResult] = useState<any>(null);
   
   const [formData, setFormData] = useState({
     projectName: "",
@@ -58,10 +61,22 @@ export const CreateLoanRequest = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleVerificationComplete = (result: any) => {
+    setVerificationResult(result);
+    setDocumentVerified(result?.output?.is_valid === true);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
+
+    // Validar que el documento esté verificado
+    if (!documentVerified) {
+      setError("Debes verificar un documento válido antes de enviar la solicitud");
+      setIsLoading(false);
+      return;
+    }
 
     try {
       // Validaciones básicas
@@ -118,7 +133,9 @@ export const CreateLoanRequest = () => {
       navigate("/request-success", { 
         state: { 
           message: "Solicitud de préstamo creada exitosamente",
-          transactionHash: transaction.hash
+          transactionHash: transaction.hash,
+          documentVerified: true,
+          verificationData: verificationResult
         }
       });
 
@@ -161,245 +178,289 @@ export const CreateLoanRequest = () => {
           Volver
         </Button>
 
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-4xl mx-auto">
           {error && (
             <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
               {error}
             </div>
           )}
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <DollarSign className="w-6 h-6 mr-2" />
-                Crear Solicitud de Financiamiento
-              </CardTitle>
-              <CardDescription>
-                Completa la información de tu proyecto para solicitar financiamiento. 
-                Deberás depositar un stake del 10% del monto solicitado.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="space-y-4">
-                  <div>
-                    <label htmlFor="projectName" className="block text-sm font-medium mb-2">
-                      Nombre del Proyecto *
-                    </label>
-                    <Input
-                      id="projectName"
-                      name="projectName"
-                      value={formData.projectName}
-                      onChange={handleChange}
-                      placeholder="Ej: Desarrollo de Software para Gestión Agrícola"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="description" className="block text-sm font-medium mb-2">
-                      Descripción del Proyecto *
-                    </label>
-                    <textarea
-                      id="description"
-                      name="description"
-                      value={formData.description}
-                      onChange={handleChange}
-                      rows={4}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                      placeholder="Describe en detalle tu proyecto, objetivos y cómo planeas utilizar los fondos..."
-                      required
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label htmlFor="category" className="block text-sm font-medium mb-2">
-                        Categoría *
-                      </label>
-                      <Select onValueChange={(value) => handleSelectChange("category", value)} required>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecciona una categoría" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {categories.map((category) => {
-                            const IconComponent = category.icon;
-                            return (
-                              <SelectItem key={category.value} value={category.value}>
-                                <div className="flex items-center">
-                                  <IconComponent className="w-4 h-4 mr-2" />
-                                  {category.label}
-                                </div>
-                              </SelectItem>
-                            );
-                          })}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div>
-                      <label htmlFor="originCountry" className="block text-sm font-medium mb-2">
-                        País de Origen *
-                      </label>
-                      <Input
-                        id="originCountry"
-                        name="originCountry"
-                        value={formData.originCountry}
-                        onChange={handleChange}
-                        placeholder="Ej: Estados Unidos"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <label htmlFor="loanAmount" className="block text-sm font-medium mb-2">
-                        Monto Solicitado (ETH) *
-                      </label>
-                      <Input
-                        id="loanAmount"
-                        name="loanAmount"
-                        type="number"
-                        value={formData.loanAmount}
-                        onChange={handleChange}
-                        placeholder="0.00"
-                        min="0.1"
-                        step="0.01"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label htmlFor="duration" className="block text-sm font-medium mb-2">
-                        Duración (días) *
-                      </label>
-                      <Input
-                        id="duration"
-                        name="duration"
-                        type="number"
-                        value={formData.duration}
-                        onChange={handleChange}
-                        placeholder="30"
-                        min="7"
-                        max="365"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label htmlFor="expectedROI" className="block text-sm font-medium mb-2">
-                        ROI Esperado (%) *
-                      </label>
-                      <Input
-                        id="expectedROI"
-                        name="expectedROI"
-                        type="number"
-                        value={formData.expectedROI}
-                        onChange={handleChange}
-                        placeholder="15.5"
-                        min="5"
-                        max="50"
-                        step="0.1"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label htmlFor="estimatedCost" className="block text-sm font-medium mb-2">
-                        Costo Estimado (ETH) *
-                      </label>
-                      <Input
-                        id="estimatedCost"
-                        name="estimatedCost"
-                        type="number"
-                        value={formData.estimatedCost}
-                        onChange={handleChange}
-                        placeholder="0.00"
-                        min="0.1"
-                        step="0.01"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label htmlFor="expectedSalePrice" className="block text-sm font-medium mb-2">
-                        Precio de Venta Esperado (ETH) *
-                      </label>
-                      <Input
-                        id="expectedSalePrice"
-                        name="expectedSalePrice"
-                        type="number"
-                        value={formData.expectedSalePrice}
-                        onChange={handleChange}
-                        placeholder="0.00"
-                        min="0.1"
-                        step="0.01"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label htmlFor="businessPlan" className="block text-sm font-medium mb-2">
-                      Plan de Negocio *
-                    </label>
-                    <textarea
-                      id="businessPlan"
-                      name="businessPlan"
-                      value={formData.businessPlan}
-                      onChange={handleChange}
-                      rows={6}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                      placeholder="Detalla tu plan de negocio, modelo de ingresos, proyecciones financieras, etc."
-                      required
-                    />
-                  </div>
-
-                  {formData.loanAmount && (
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                      <p className="text-sm text-blue-800">
-                        <strong>Stake requerido:</strong> {parseFloat(formData.loanAmount) * 0.1} ETH
-                        <br />
-                        <span className="text-xs">
-                          (10% del monto solicitado que se depositará como garantía)
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Sección de Verificación de Documentos */}
+            <div>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <FileText className="w-6 h-6 mr-2" />
+                    Verificación de Documento
+                  </CardTitle>
+                  <CardDescription>
+                    Sube un documento para verificar su autenticidad. La solicitud solo se puede enviar con un documento verificado.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <FileHashCalculator onVerificationComplete={handleVerificationComplete} />
+                  
+                  {verificationResult && (
+                    <div className={`mt-4 p-4 rounded-lg border ${
+                      documentVerified 
+                        ? "bg-green-50 border-green-200 text-green-800" 
+                        : "bg-red-50 border-red-200 text-red-800"
+                    }`}>
+                      <div className="flex items-center mb-2">
+                        {documentVerified ? (
+                          <CheckCircle className="w-5 h-5 mr-2" />
+                        ) : (
+                          <XCircle className="w-5 h-5 mr-2" />
+                        )}
+                        <span className="font-semibold">
+                          {documentVerified ? "Documento Verificado" : "Documento No Válido"}
                         </span>
-                      </p>
+                      </div>
+                      <p className="text-sm">{verificationResult.output?.message}</p>
                     </div>
                   )}
-                </div>
+                </CardContent>
+              </Card>
+            </div>
 
-                <div className="flex justify-between pt-4">
-                  <Button 
-                    variant="outline" 
-                    type="button" 
-                    onClick={() => navigate(-1)}
-                    disabled={isLoading}
-                  >
-                    Cancelar
-                  </Button>
-                  <Button 
-                    type="submit" 
-                    disabled={isLoading}
-                  >
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Procesando...
-                      </>
-                    ) : (
-                      <>
-                        <FileText className="w-4 h-4 mr-2" />
-                        Crear Solicitud
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
+            {/* Sección del Formulario de Préstamo */}
+            <div>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <DollarSign className="w-6 h-6 mr-2" />
+                    Información del Préstamo
+                  </CardTitle>
+                  <CardDescription>
+                    Completa la información de tu proyecto para solicitar financiamiento. 
+                    Deberás depositar un stake del 10% del monto solicitado.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleSubmit} className="space-y-6">
+                    <div className="space-y-4">
+                      <div>
+                        <label htmlFor="projectName" className="block text-sm font-medium mb-2">
+                          Nombre del Proyecto *
+                        </label>
+                        <Input
+                          id="projectName"
+                          name="projectName"
+                          value={formData.projectName}
+                          onChange={handleChange}
+                          placeholder="Ej: Desarrollo de Software para Gestión Agrícola"
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <label htmlFor="description" className="block text-sm font-medium mb-2">
+                          Descripción del Proyecto *
+                        </label>
+                        <textarea
+                          id="description"
+                          name="description"
+                          value={formData.description}
+                          onChange={handleChange}
+                          rows={3}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          placeholder="Describe en detalle tu proyecto, objetivos y cómo planeas utilizar los fondos..."
+                          required
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label htmlFor="category" className="block text-sm font-medium mb-2">
+                            Categoría *
+                          </label>
+                          <Select onValueChange={(value) => handleSelectChange("category", value)} required>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecciona una categoría" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {categories.map((category) => {
+                                const IconComponent = category.icon;
+                                return (
+                                  <SelectItem key={category.value} value={category.value}>
+                                    <div className="flex items-center">
+                                      <IconComponent className="w-4 h-4 mr-2" />
+                                      {category.label}
+                                    </div>
+                                  </SelectItem>
+                                );
+                              })}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div>
+                          <label htmlFor="originCountry" className="block text-sm font-medium mb-2">
+                            País de Origen *
+                          </label>
+                          <Input
+                            id="originCountry"
+                            name="originCountry"
+                            value={formData.originCountry}
+                            onChange={handleChange}
+                            placeholder="Ej: Estados Unidos"
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                          <label htmlFor="loanAmount" className="block text-sm font-medium mb-2">
+                            Monto Solicitado (ETH) *
+                          </label>
+                          <Input
+                            id="loanAmount"
+                            name="loanAmount"
+                            type="number"
+                            value={formData.loanAmount}
+                            onChange={handleChange}
+                            placeholder="0.00"
+                            min="0.1"
+                            step="0.01"
+                            required
+                          />
+                        </div>
+
+                        <div>
+                          <label htmlFor="duration" className="block text-sm font-medium mb-2">
+                            Duración (días) *
+                          </label>
+                          <Input
+                            id="duration"
+                            name="duration"
+                            type="number"
+                            value={formData.duration}
+                            onChange={handleChange}
+                            placeholder="30"
+                            min="7"
+                            max="365"
+                            required
+                          />
+                        </div>
+
+                        <div>
+                          <label htmlFor="expectedROI" className="block text-sm font-medium mb-2">
+                            ROI Esperado (%) *
+                          </label>
+                          <Input
+                            id="expectedROI"
+                            name="expectedROI"
+                            type="number"
+                            value={formData.expectedROI}
+                            onChange={handleChange}
+                            placeholder="15.5"
+                            min="5"
+                            max="50"
+                            step="0.1"
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label htmlFor="estimatedCost" className="block text-sm font-medium mb-2">
+                            Costo Estimado (ETH) *
+                          </label>
+                          <Input
+                            id="estimatedCost"
+                            name="estimatedCost"
+                            type="number"
+                            value={formData.estimatedCost}
+                            onChange={handleChange}
+                            placeholder="0.00"
+                            min="0.1"
+                            step="0.01"
+                            required
+                          />
+                        </div>
+
+                        <div>
+                          <label htmlFor="expectedSalePrice" className="block text-sm font-medium mb-2">
+                            Precio de Venta Esperado (ETH) *
+                          </label>
+                          <Input
+                            id="expectedSalePrice"
+                            name="expectedSalePrice"
+                            type="number"
+                            value={formData.expectedSalePrice}
+                            onChange={handleChange}
+                            placeholder="0.00"
+                            min="0.1"
+                            step="0.01"
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label htmlFor="businessPlan" className="block text-sm font-medium mb-2">
+                          Plan de Negocio *
+                        </label>
+                        <textarea
+                          id="businessPlan"
+                          name="businessPlan"
+                          value={formData.businessPlan}
+                          onChange={handleChange}
+                          rows={4}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          placeholder="Detalla tu plan de negocio, modelo de ingresos, proyecciones financieras, etc."
+                          required
+                        />
+                      </div>
+
+                      {formData.loanAmount && (
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                          <p className="text-sm text-blue-800">
+                            <strong>Stake requerido:</strong> {parseFloat(formData.loanAmount) * 0.1} ETH
+                            <br />
+                            <span className="text-xs">
+                              (10% del monto solicitado que se depositará como garantía)
+                            </span>
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex justify-between pt-4">
+                      <Button 
+                        variant="outline" 
+                        type="button" 
+                        onClick={() => navigate(-1)}
+                        disabled={isLoading}
+                      >
+                        Cancelar
+                      </Button>
+                      <Button 
+                        type="submit" 
+                        disabled={isLoading || !documentVerified}
+                        className={!documentVerified ? "bg-gray-400 hover:bg-gray-400" : ""}
+                      >
+                        {isLoading ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Procesando...
+                          </>
+                        ) : (
+                          <>
+                            <FileText className="w-4 h-4 mr-2" />
+                            {documentVerified ? "Crear Solicitud" : "Esperando verificación"}
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </form>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         </div>
       </div>
       <Footer />

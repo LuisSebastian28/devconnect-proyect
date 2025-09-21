@@ -21,7 +21,11 @@ interface VerificationResponse {
   };
 }
 
-const FileHashCalculator: React.FC = () => {
+interface FileHashCalculatorProps {
+  onVerificationComplete: (result: VerificationResponse) => void;
+}
+
+const FileHashCalculator: React.FC<FileHashCalculatorProps> = ({ onVerificationComplete }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isCalculating, setIsCalculating] = useState<boolean>(false);
   const [isVerifying, setIsVerifying] = useState<boolean>(false);
@@ -73,11 +77,13 @@ const FileHashCalculator: React.FC = () => {
 
       // 2. Verificar automáticamente con Livy
       setIsVerifying(true);
-      await verifyHashWithLivy(fileHash);
+      const result = await verifyHashWithLivy(fileHash);
+      setVerificationResult(result);
+      onVerificationComplete(result);
 
     } catch (error) {
       console.error('Error procesando el archivo:', error);
-      setVerificationResult({
+      const errorResult = {
         success: false,
         service: 'document-verifier',
         output: {
@@ -93,14 +99,16 @@ const FileHashCalculator: React.FC = () => {
           serviceId: '',
           postedToDataAvailability: false
         }
-      });
+      };
+      setVerificationResult(errorResult);
+      onVerificationComplete(errorResult);
     } finally {
       setIsCalculating(false);
       setIsVerifying(false);
     }
   };
 
-  const verifyHashWithLivy = async (fileHash: string) => {
+  const verifyHashWithLivy = async (fileHash: string): Promise<VerificationResponse> => {
     try {
       const response = await fetch('http://localhost:3001/api/livy/verify-document', {
         method: 'POST',
@@ -114,29 +122,11 @@ const FileHashCalculator: React.FC = () => {
         throw new Error(`Error ${response.status}: ${response.statusText}`);
       }
 
-      const data: VerificationResponse = await response.json();
-      setVerificationResult(data);
+      return await response.json();
 
     } catch (error) {
       console.error('Error verificando el hash:', error);
-      // Mostrar mensaje de error específico
-      setVerificationResult({
-        success: false,
-        service: 'document-verifier',
-        output: {
-          success: false,
-          message: '❌ DOCUMENTO NO VÁLIDO: El hash no se encuentra en nuestros registros',
-          input_hash: '',
-          valid_hashes_count: 0,
-          is_valid: false
-        },
-        proofValid: false,
-        livyResult: {
-          status: 'error',
-          serviceId: '',
-          postedToDataAvailability: false
-        }
-      });
+      throw error;
     }
   };
 
@@ -147,44 +137,49 @@ const FileHashCalculator: React.FC = () => {
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
+    onVerificationComplete({
+      success: false,
+      service: 'document-verifier',
+      output: {
+        success: false,
+        message: '',
+        input_hash: '',
+        valid_hashes_count: 0,
+        is_valid: false
+      },
+      proofValid: false,
+      livyResult: {
+        status: 'reset',
+        serviceId: '',
+        postedToDataAvailability: false
+      }
+    });
   };
 
   return (
-    <div style={{ padding: '20px', fontFamily: 'sans-serif', maxWidth: '800px', margin: '0 auto' }}>
-      <h2>📁 Verificador de Documentos con Livy</h2>
-      <p style={{ color: '#666', marginBottom: '20px' }}>
-        Arrastra y suelta un documento o haz clic para seleccionarlo. La verificación se realizará automáticamente.
-      </p>
-
+    <div className="p-5 font-sans max-w-full">
+      <h3 className="text-lg font-semibold mb-4">📁 Verificación de Documento</h3>
+      
       {/* Dropbox Area */}
       <div
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onClick={() => fileInputRef.current?.click()}
-        style={{ 
-          marginBottom: '20px',
-          padding: '40px',
-          border: `2px dashed ${isDragOver ? '#007bff' : '#ccc'}`,
-          borderRadius: '12px',
-          backgroundColor: isDragOver ? '#f0f8ff' : '#fafafa',
-          textAlign: 'center',
-          cursor: 'pointer',
-          transition: 'all 0.3s ease',
-          minHeight: '150px',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center'
-        }}
+        className={`
+          mb-4 p-6 border-2 border-dashed rounded-xl text-center cursor-pointer
+          transition-all duration-300 min-h-32 flex flex-col justify-center items-center
+          ${isDragOver 
+            ? 'border-blue-500 bg-blue-50' 
+            : 'border-gray-300 bg-gray-50 hover:bg-gray-100'
+          }
+        `}
       >
-        <div style={{ fontSize: '48px', marginBottom: '15px' }}>
-          📁
-        </div>
-        <p style={{ margin: '0 0 10px 0', fontWeight: 'bold' }}>
+        <div className="text-3xl mb-3">📁</div>
+        <p className="font-semibold mb-1">
           {selectedFile ? 'Archivo seleccionado' : 'Arrastra y suelta tu documento aquí'}
         </p>
-        <p style={{ margin: 0, color: '#666', fontSize: '14px' }}>
+        <p className="text-gray-600 text-sm">
           {selectedFile ? selectedFile.name : 'o haz clic para seleccionar un archivo'}
         </p>
         
@@ -192,23 +187,16 @@ const FileHashCalculator: React.FC = () => {
           type="file"
           ref={fileInputRef}
           onChange={handleInputChange}
-          style={{ display: 'none' }}
+          className="hidden"
         />
       </div>
 
       {/* Botón de Limpiar */}
-      <div style={{ marginBottom: '20px' }}>
+      <div className="mb-4">
         <button 
           onClick={reset}
           disabled={isCalculating || isVerifying}
-          style={{
-            padding: '10px 20px',
-            backgroundColor: '#dc3545',
-            color: 'white',
-            border: 'none',
-            borderRadius: '6px',
-            cursor: isCalculating || isVerifying ? 'not-allowed' : 'pointer'
-          }}
+          className="px-4 py-2 bg-red-600 text-white rounded-lg disabled:bg-gray-400 disabled:cursor-not-allowed"
         >
           🗑️ Limpiar
         </button>
@@ -216,92 +204,46 @@ const FileHashCalculator: React.FC = () => {
 
       {/* Información del Archivo */}
       {selectedFile && (
-        <div style={{ 
-          marginBottom: '20px', 
-          padding: '15px', 
-          backgroundColor: '#e7f3ff', 
-          borderRadius: '8px',
-          border: '1px solid #b8daff'
-        }}>
-          <strong>📄 Archivo seleccionado:</strong> {selectedFile.name} <br />
+        <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+          <strong>📄 Archivo:</strong> {selectedFile.name} <br />
           <strong>📏 Tamaño:</strong> {(selectedFile.size / 1024).toFixed(2)} KB
         </div>
       )}
 
       {/* Resultado de la Verificación */}
       {verificationResult && (
-        <div style={{
-          padding: '20px',
-          borderRadius: '12px',
-          border: `3px solid ${verificationResult.output.is_valid ? '#28a745' : '#dc3545'}`,
-          backgroundColor: verificationResult.output.is_valid ? '#d4edda' : '#f8d7da',
-          marginBottom: '20px'
-        }}>
-          <h3 style={{ 
-            marginTop: 0,
-            color: verificationResult.output.is_valid ? '#155724' : '#721c24'
-          }}>
-            {verificationResult.output.is_valid ? '✅ VERIFICACIÓN EXITOSA' : '❌ VERIFICACIÓN FALLIDA'}
-          </h3>
+        <div className={`
+          p-4 rounded-xl border-2 mb-4
+          ${verificationResult.output.is_valid 
+            ? 'bg-green-50 border-green-300 text-green-800' 
+            : 'bg-red-50 border-red-300 text-red-800'
+          }
+        `}>
+          <h4 className="font-semibold mb-2 flex items-center">
+            {verificationResult.output.is_valid ? (
+              <>✅ VERIFICACIÓN EXITOSA</>
+            ) : (
+              <>❌ VERIFICACIÓN FALLIDA</>
+            )}
+          </h4>
           
-          <p style={{ 
-            fontWeight: 'bold', 
-            fontSize: '16px',
-            margin: '10px 0',
-            color: verificationResult.output.is_valid ? '#155724' : '#721c24'
-          }}>
+          <p className="font-medium mb-2">
             {verificationResult.output.message}
           </p>
-          
-          {verificationResult.output.is_valid && (
-            <div style={{ 
-              marginTop: '15px', 
-              padding: '12px',
-              backgroundColor: '#c3e6cb',
-              borderRadius: '6px',
-              border: '1px solid #b1dfbb'
-            }}>
-              <strong>✓ Verificación confiable:</strong> Ejecutada en entorno TEE con attestation proof
-            </div>
-          )}
         </div>
       )}
 
       {/* Loading durante procesamiento */}
       {(isCalculating || isVerifying) && (
-        <div style={{ 
-          padding: '20px', 
-          backgroundColor: '#fff3cd', 
-          border: '1px solid #ffeaa7',
-          borderRadius: '8px',
-          textAlign: 'center',
-          marginBottom: '20px'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div style={{ 
-              width: '24px', 
-              height: '24px', 
-              border: '3px solid #007bff',
-              borderTop: '3px solid transparent',
-              borderRadius: '50%',
-              animation: 'spin 1s linear infinite',
-              marginRight: '15px'
-            }}></div>
-            <span style={{ fontWeight: 'bold' }}>
-              {isCalculating ? 'Calculando y verificando documento...' : 'Verificando con Livy TEE...'}
+        <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200 text-center mb-4">
+          <div className="flex items-center justify-center">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mr-3"></div>
+            <span className="font-semibold">
+              {isCalculating ? 'Calculando hash...' : 'Verificando con Livy TEE...'}
             </span>
           </div>
         </div>
       )}
-
-      <style>
-        {`
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-        `}
-      </style>
     </div>
   );
 };
