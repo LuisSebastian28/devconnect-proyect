@@ -1,14 +1,14 @@
+// src/layout/Register.tsx
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/Cards";
 import { Button } from "../components/Button";
 import { Input } from "../components/ui/Input";
-import Separator from "../components/ui/separator";
+
 import Footer from "../components/Footer";
 import { Navbar } from "../components/Navbar";
-import { Mail, Lock, User, Building, ArrowLeft, Phone, Loader } from "lucide-react";
-import { authService } from "../services/authService";
-import type { RegisterData } from "../services/authService";
+import { User, Building, ArrowLeft, Phone, Loader } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 
 const countryCodes = [
   { code: "+1", country: "Estados Unidos", flag: "🇺🇸" },
@@ -26,17 +26,15 @@ const countryCodes = [
 
 export default function Register() {
   const navigate = useNavigate();
+  const { register, isLoading } = useAuth();
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
-  const [selectedCountry, setSelectedCountry] = useState(countryCodes[7]); // Bolivia por defecto
-  const [userType, setUserType] = useState<"investor" | "entrepreneur">("investor");
-  const [isLoading, setIsLoading] = useState(false);
+  const [selectedCountry, setSelectedCountry] = useState(countryCodes[7]);
+  const [userType, setUserType] = useState<"investor" | "entrepreneur">("entrepreneur");
   const [error, setError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     fullName: "",
-    email: "",
     phone: "",
-    password: "",
     company: "",
   });
 
@@ -46,7 +44,7 @@ export default function Register() {
       ...prev,
       [name]: value
     }));
-    setError(null); 
+    setError(null);
   };
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -59,38 +57,30 @@ export default function Register() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
     setError(null);
 
     try {
       const fullPhone = `${selectedCountry.code}${formData.phone}`;
-      const userData: RegisterData = {
+      const userData = {
         fullName: formData.fullName,
         phone: fullPhone,
         userType,
         company: userType === 'entrepreneur' ? formData.company : undefined
       };
 
-      let response;
-      if (userType === 'investor') {
-        response = await authService.registerInvestor(userData);
-      } else {
-        response = await authService.registerEntrepreneur(userData);
-      }
-
-      console.log("Registro exitoso:", response);
+      await register(userData);
+    
+    // ✅ REDIRIGIR DIRECTAMENTE AL DASHBOARD - NO AL LOGIN
+        if (userType === "investor") {
+          navigate("/investor-dashboard");
+        } else {
+          navigate("/dashboard");
+    }
       
-      navigate("/dashboard", { 
-        state: { 
-          user: response.user
-        }
-      });
 
     } catch (error: any) {
       console.error("Error en registro:", error);
-      setError(error.response?.data?.message || "Error en el registro. Intenta nuevamente.");
-    } finally {
-      setIsLoading(false);
+      setError(error.message || "Error en el registro. Intenta nuevamente.");
     }
   };
 
@@ -136,6 +126,7 @@ export default function Register() {
                       : "text-blue-700 hover:bg-blue-200"
                   }`}
                   onClick={() => setUserType("investor")}
+                  disabled={isLoading}
                 >
                   Inversionista
                 </Button>
@@ -148,6 +139,7 @@ export default function Register() {
                       : "text-blue-700 hover:bg-blue-200"
                   }`}
                   onClick={() => setUserType("entrepreneur")}
+                  disabled={isLoading}
                 >
                   Emprendedor
                 </Button>
@@ -177,6 +169,7 @@ export default function Register() {
                       onChange={handleInputChange}
                       required
                       minLength={2}
+                      disabled={isLoading}
                     />
                   </div>
                 </div>
@@ -192,14 +185,15 @@ export default function Register() {
                       <button
                         type="button"
                         onClick={() => setShowCountryDropdown(!showCountryDropdown)}
-                        className="flex items-center gap-2 px-3 py-2 h-10 border border-gray-300 rounded-lg bg-white text-gray-700 hover:border-gray-400 focus:border-blue-500 focus:ring-blue-500 focus:outline-none min-w-[85px]"
+                        className="flex items-center gap-2 px-3 py-2 h-10 border border-gray-300 rounded-lg bg-white text-gray-700 hover:border-gray-400 focus:border-blue-500 focus:ring-blue-500 focus:outline-none min-w-[85px] disabled:opacity-50"
+                        disabled={isLoading}
                       >
                         <span>{selectedCountry.flag}</span>
                         <span className="text-sm">{selectedCountry.code}</span>
                         <ChevronDown className="w-4 h-4" />
                       </button>
                       
-                      {showCountryDropdown && (
+                      {showCountryDropdown && !isLoading && (
                         <div className="absolute top-full left-0 mt-1 w-48 max-h-60 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-lg z-10">
                           {countryCodes.map((country) => (
                             <button
@@ -231,6 +225,7 @@ export default function Register() {
                         required
                         minLength={7}
                         maxLength={10}
+                        disabled={isLoading}
                       />
                     </div>
                   </div>
@@ -253,6 +248,7 @@ export default function Register() {
                         value={formData.company}
                         onChange={handleInputChange}
                         required={userType === "entrepreneur"}
+                        disabled={isLoading}
                       />
                     </div>
                   </div>
@@ -275,7 +271,7 @@ export default function Register() {
                 </Button>
               </form>
 
-              <Separator className="my-6 bg-gray-200" />
+              
 
               <div className="text-center">
                 <p className="text-sm text-gray-600">

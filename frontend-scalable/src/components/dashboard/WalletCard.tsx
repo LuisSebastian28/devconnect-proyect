@@ -1,11 +1,16 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/Cards";
 import { Button } from "../Button";
-import { Copy, Wallet, DollarSign, RefreshCw } from "lucide-react";
+import { Copy, Wallet, RefreshCw, Send } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useState } from "react";
 
-export default function WalletCard() {
-  const { user, wallet } = useAuth(); // ← Remueve login de aquí
+interface WalletCardProps {
+  onTransferClick: () => void;
+  onBalanceRefresh: () => void;
+}
+
+export default function WalletCard({ onTransferClick, onBalanceRefresh }: WalletCardProps) {
+  const { user, wallet, login } = useAuth();
   const [copied, setCopied] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -18,13 +23,13 @@ export default function WalletCard() {
   };
 
   const refreshBalance = async () => {
+    if (!user) return;
+    
     setRefreshing(true);
     try {
-      // Simular actualización de balance (debes implementar esto en tu servicio)
-      console.log("Refrescando balance...");
-      // Aquí deberías llamar a un servicio específico para actualizar el balance
-      // en lugar de hacer login completo
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simular delay
+      // Hacer login nuevamente para actualizar el balance
+      await login(user.phone, user.userType);
+      onBalanceRefresh(); // Notificar al componente padre
     } catch (error) {
       console.error('Error refreshing balance:', error);
     } finally {
@@ -49,36 +54,39 @@ export default function WalletCard() {
   }
 
   return (
-    <Card className="border-green-200 bg-gradient-to-br from-green-50 to-emerald-50">
+    <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-cyan-50">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="flex items-center gap-2 text-green-800">
+            <CardTitle className="flex items-center gap-2 text-blue-800">
               <Wallet className="w-5 h-5" />
               Billetera Digital
             </CardTitle>
             <CardDescription>
-              Saldo disponible en USDT
+              Saldo disponible en ETH
             </CardDescription>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={refreshBalance}
-            disabled={refreshing}
-            className="text-green-600 hover:text-green-800"
-          >
-            <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={refreshBalance}
+              disabled={refreshing}
+              className="text-blue-600 hover:text-blue-800"
+              title="Actualizar balance"
+            >
+              <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
           <div className="text-center">
-            <p className="text-3xl font-bold text-green-700">
-              {wallet.balance.toLocaleString('es-BO', { style: 'currency', currency: 'ETH' })}
+            <p className="text-3xl font-bold text-blue-700">
+              {wallet.balance.toFixed(6)} ETH
             </p>
-            <p className="text-sm text-green-600 mt-1">Saldo disponible</p>
+            <p className="text-sm text-blue-600 mt-1">Saldo disponible</p>
           </div>
 
           <div className="space-y-2">
@@ -95,12 +103,21 @@ export default function WalletCard() {
                 onClick={copyToClipboard}
                 disabled={!wallet.address}
                 className="text-gray-500 hover:text-gray-700"
+                title="Copiar dirección"
               >
                 <Copy className="w-4 h-4" />
                 {copied ? "¡Copiado!" : "Copiar"}
               </Button>
             </div>
           </div>
+
+          <Button
+            onClick={onTransferClick}
+            className="w-full bg-blue-600 hover:bg-blue-700"
+          >
+            <Send className="w-4 h-4 mr-2" />
+            Transferir ETH
+          </Button>
         </div>
       </CardContent>
     </Card>

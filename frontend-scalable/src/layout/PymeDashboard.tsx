@@ -6,18 +6,21 @@ import WalletCard from "../components/dashboard/WalletCard";
 import LoanForm from "../components/dashboard/LoanForm";
 import LoansList from "../components/dashboard/LoansList";
 import LoanDetailsModal from "../components/dashboard/LoanDetailsModal";
+import TransferModal from "../components/dashboard/TransferModal";
 import type { Loan } from "../types/loan";
-import { ArrowLeft, Plus, User } from "lucide-react";
+import { ArrowLeft, Plus, User,RefreshCw } from "lucide-react";
 import { Button } from "../components/Button";
 import { useAuth } from "../context/AuthContext";
 
 export default function PymeDashboard() {
   const navigate = useNavigate();
-  const { user, wallet, isLoading } = useAuth();
+  const { user, wallet, isLoading, login } = useAuth();
   
   const [loans, setLoans] = useState<Loan[]>([]);
   const [showLoanForm, setShowLoanForm] = useState(false);
   const [selectedLoan, setSelectedLoan] = useState<Loan | null>(null);
+  const [showTransferModal, setShowTransferModal] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   console.log('PymeDashboard rendering - User:', user, 'Wallet:', wallet, 'Loading:', isLoading);
 
@@ -72,6 +75,28 @@ export default function PymeDashboard() {
     setSelectedLoan(null);
   };
 
+  const handleTransferSuccess = () => {
+    // Forzar actualización del balance después de transferencia
+    setRefreshTrigger(prev => prev + 1);
+    console.log("Transferencia exitosa, actualizando balance...");
+  };
+
+  const handleBalanceRefresh = () => {
+    console.log("Balance actualizado manualmente");
+  };
+
+  const handleRefreshBalance = async () => {
+    if (!user) return;
+    
+    try {
+      // Hacer login nuevamente para actualizar el balance
+      await login(user.phone, user.userType);
+      setRefreshTrigger(prev => prev + 1);
+    } catch (error) {
+      console.error('Error refreshing balance:', error);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -99,6 +124,7 @@ export default function PymeDashboard() {
       
       <main className="flex-grow py-8">
         <div className="container mx-auto px-4 max-w-4xl">
+          {/* Header */}
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-4">
               <Button 
@@ -118,15 +144,27 @@ export default function PymeDashboard() {
               </div>
             </div>
             
-            <Button 
-              onClick={() => setShowLoanForm(!showLoanForm)}
-              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
-            >
-              <Plus className="w-4 h-4" />
-              {showLoanForm ? "Cancelar" : "Solicitar Préstamo"}
-            </Button>
+            <div className="flex gap-3">
+              <Button 
+                onClick={handleRefreshBalance}
+                variant="outline"
+                className="flex items-center gap-2"
+                title="Actualizar balance"
+              >
+                <RefreshCw className="w-4 h-4" />
+                Actualizar
+              </Button>
+              <Button 
+                onClick={() => setShowLoanForm(!showLoanForm)}
+                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
+              >
+                <Plus className="w-4 h-4" />
+                {showLoanForm ? "Cancelar" : "Solicitar Préstamo"}
+              </Button>
+            </div>
           </div>
 
+          {/* Formulario de préstamo */}
           {showLoanForm && (
             <LoanForm 
               onSubmit={handleNewLoan}
@@ -134,24 +172,39 @@ export default function PymeDashboard() {
             />
           )}
 
+          {/* Información de la billetera */}
           <div className="mb-8">
-            <WalletCard />
+            <WalletCard 
+              onTransferClick={() => setShowTransferModal(true)}
+              onBalanceRefresh={handleBalanceRefresh}
+              key={refreshTrigger}
+            />
           </div>
 
+          {/* Lista de préstamos */}
           <LoansList 
             loans={loans}
             onLoanClick={handleLoanClick}
           />
 
+          {/* Modal de detalles del préstamo */}
           {selectedLoan && (
             <LoanDetailsModal 
               loan={selectedLoan}
               onClose={closeLoanDetails}
             />
           )}
+
+          {/* Modal de Transferencia */}
+          <TransferModal
+            isOpen={showTransferModal}
+            onClose={() => setShowTransferModal(false)}
+            onTransferSuccess={handleTransferSuccess}
+          />
         </div>
       </main>
 
+      <Footer />
     </div>
   );
 }

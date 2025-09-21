@@ -15,10 +15,18 @@ export interface WalletData {
   created: boolean;
 }
 
+export interface RegisterData {
+  fullName: string;
+  phone: string;
+  userType: 'investor' | 'entrepreneur';
+  company?: string;
+}
+
 interface AuthContextType {
   user: User | null;
   wallet: WalletData | null;
   login: (phone: string, userType: 'investor' | 'entrepreneur') => Promise<void>;
+    register: (userData: RegisterData) => Promise<{ success: boolean; user: User; wallet: WalletData }>;
   logout: () => void;
   isLoading: boolean;
 }
@@ -75,7 +83,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         throw new Error('Invalid response from server');
       }
 
-      // ✅ Now response.user should contain { user: {...}, wallet: {...} }
       const userData = response.user.user;
       const walletData = response.user.wallet;
       
@@ -102,6 +109,66 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const register = async (userData: RegisterData) => {
+  console.log('AuthContext.register called with:', userData);
+  
+  try {
+    setIsLoading(true);
+    
+    const { authService } = await import('../services/authService');
+    console.log('Calling authService.register...');
+    
+    let response;
+    
+    if (userData.userType === 'investor') {
+      const { company, ...investorData } = userData;
+      response = await authService.registerInvestor(investorData);
+    } else {
+      response = await authService.registerEntrepreneur(userData);
+    }
+    
+    console.log('authService register response:', response);
+    
+    if (!response.success || !response.user) {
+      throw new Error(response.message || 'Invalid response from server');
+    }
+
+    const userDataResponse = response.user;
+    const walletData = response.wallet;
+    
+    console.log('Setting user after registration:', userDataResponse);
+    console.log('Setting wallet after registration:', walletData);
+    
+    // ✅ ESTAS LÍNEAS SON CRÍTICAS - MANTIENEN LA SESIÓN INICIADA
+    setUser(userDataResponse);
+    setWallet(walletData);
+    
+    localStorage.setItem('user', JSON.stringify(userDataResponse));
+    localStorage.setItem('wallet', JSON.stringify(walletData));
+    
+    console.log('Registration successful! User is now logged in.');
+    
+    // ✅ RETORNAR LOS DATOS PARA QUE EL COMPONENTE SEPA QUE FUE EXITOSO
+    return { success: true, user: userDataResponse, wallet: walletData };
+    
+  } catch (error: any) {
+    console.error('Registration error in AuthContext:', error);
+    
+    const errorMessage = error.response?.data?.message || 
+                        error.message || 
+                        'Error en el registro. Intenta nuevamente.';
+    
+    setUser(null);
+    setWallet(null);
+    localStorage.removeItem('user');
+    localStorage.removeItem('wallet');
+    
+    throw new Error(errorMessage);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
   const logout = () => {
     console.log('Logging out...');
     setUser(null);
@@ -110,7 +177,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     localStorage.removeItem('wallet');
   };
 
-  // Debug state changes
   useEffect(() => {
     console.log('AuthContext state changed:', { 
       user: user ? `${user.fullName} (${user.userType})` : null, 
@@ -120,7 +186,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, [user, wallet, isLoading]);
 
   return (
-    <AuthContext.Provider value={{ user, wallet, login, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, wallet, login, register, logout, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

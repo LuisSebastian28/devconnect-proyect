@@ -4,7 +4,6 @@ import { useNavigate, Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/Cards";
 import { Button } from "../components/Button";
 import { Input } from "../components/ui/Input";
-import Separator from "../components/ui/separator";
 import Footer from "../components/Footer";
 import { Navbar } from "../components/Navbar";
 import { Phone, ArrowLeft } from "lucide-react";
@@ -233,8 +232,7 @@ export default function Login() {
                 </Button>
               </form>
 
-              <Separator className="my-6 bg-gray-200" />
-
+            
               <div className="text-center">
                 <p className="text-sm text-gray-600 mb-4">
                   ¿No tienes una cuenta?{" "}
