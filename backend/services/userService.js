@@ -1,4 +1,3 @@
-
 class UserService {
   constructor(walletRepository, walletService) {
     this.walletRepository = walletRepository;
@@ -9,13 +8,11 @@ class UserService {
     try {
       const normalizedPhone = this.validateAndNormalizePhone(userData.phone);
       
-      // Verificar si el usuario ya existe
       const existingUser = await this.walletRepository.findUserByPhone(normalizedPhone);
       if (existingUser) {
         throw new Error('El usuario ya existe con este número de teléfono');
       }
 
-      // Crear usuario inversionista
       const user = await this.walletRepository.saveUser({
         fullName: userData.fullName,
         phone: normalizedPhone,
@@ -24,9 +21,8 @@ class UserService {
         status: 'active'
       });
 
-      // Crear wallet para el usuario
-      await this.walletService.createWallet(normalizedPhone);
-
+      const wallet = await this.walletService.createWallet(normalizedPhone);
+      
       return {
         user: {
           id: user.id,
@@ -36,8 +32,9 @@ class UserService {
           createdAt: user.createdAt
         },
         wallet: {
-          created: true,
-          phone: normalizedPhone
+          address: wallet.blockchain_address,
+          balance: wallet.balance_eth,
+          created: true
         }
       };
 
@@ -51,18 +48,15 @@ class UserService {
     try {
       const normalizedPhone = this.validateAndNormalizePhone(userData.phone);
       
-      // Verificar si el usuario ya existe
       const existingUser = await this.walletRepository.findUserByPhone(normalizedPhone);
       if (existingUser) {
         throw new Error('El usuario ya existe con este número de teléfono');
       }
 
-      // Validar empresa
       if (!userData.company || userData.company.trim().length < 2) {
         throw new Error('El nombre de la empresa es requerido y debe tener al menos 2 caracteres');
       }
 
-      // Crear usuario emprendedor
       const user = await this.walletRepository.saveUser({
         fullName: userData.fullName,
         phone: normalizedPhone,
@@ -71,8 +65,7 @@ class UserService {
         status: 'active'
       });
 
-      // Crear wallet para el usuario
-      await this.walletService.createWallet(normalizedPhone);
+      const wallet = await this.walletService.createWallet(normalizedPhone);
 
       return {
         user: {
@@ -84,8 +77,9 @@ class UserService {
           createdAt: user.createdAt
         },
         wallet: {
-          created: true,
-          phone: normalizedPhone
+          address: wallet.blockchain_address,
+          balance: wallet.balance_usd,
+          created: true
         }
       };
 
@@ -112,13 +106,22 @@ class UserService {
         throw new Error('Usuario inactivo');
       }
 
+      const wallet = await this.walletService.getWalletWithBalance(normalizedPhone);
+
       return {
-        id: user.id,
-        fullName: user.fullName,
-        phone: user.phone,
-        userType: user.userType,
-        company: user.company,
-        createdAt: user.createdAt
+        user: {
+          id: user.id,
+          fullName: user.fullName,
+          phone: user.phone,
+          userType: user.userType,
+          company: user.company,
+          createdAt: user.createdAt
+        },
+        wallet: {
+          address: wallet.blockchain_address,
+          balance: wallet.balance_eth,
+          created: true
+        }
       };
 
     } catch (error) {
@@ -151,4 +154,4 @@ class UserService {
   }
 }
 
-export default  UserService;
+export default UserService;

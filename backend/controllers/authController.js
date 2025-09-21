@@ -1,12 +1,9 @@
-import userService from '../services/userService.js';
-
 const authController = (userService) => {
   return {
     async registerInvestor(req, res) {
       try {
         const { fullName, phone, userType } = req.body;
         
-        // Validaciones básicas
         if (!fullName || !phone || !userType) {
           return res.status(400).json({
             success: false,
@@ -23,8 +20,7 @@ const authController = (userService) => {
         res.status(201).json({
           success: true,
           message: 'Inversionista registrado exitosamente',
-          user: result.user,
-          wallet: result.wallet
+          user: result
         });
 
       } catch (error) {
@@ -40,7 +36,6 @@ const authController = (userService) => {
       try {
         const { fullName, phone, userType, company } = req.body;
         
-        // Validaciones básicas
         if (!fullName || !phone || !userType || !company) {
           return res.status(400).json({
             success: false,
@@ -58,8 +53,7 @@ const authController = (userService) => {
         res.status(201).json({
           success: true,
           message: 'Emprendedor registrado exitosamente',
-          user: result.user,
-          wallet: result.wallet
+          user: result
         });
 
       } catch (error) {
@@ -71,6 +65,7 @@ const authController = (userService) => {
       }
     },
 
+    // ✅ SIMPLIFIED: loginUser now returns the complete structure
     async login(req, res) {
       try {
         const { phone, userType } = req.body;
@@ -82,12 +77,13 @@ const authController = (userService) => {
           });
         }
 
-        const user = await userService.loginUser(phone, userType);
+        // ✅ loginUser now returns { user: {...}, wallet: {...} }
+        const result = await userService.loginUser(phone, userType);
         
         res.json({
           success: true,
           message: 'Login exitoso',
-          user
+          user: result  // This now contains both user and wallet
         });
 
       } catch (error) {

@@ -13,7 +13,7 @@ import authRoutes from './routes/auth.js';
 import livyRoutes from './livy-services/routes/livyRoutes.js';
 import documentRoutes from './livy-services/routes/documentRoutes.js';
 import BlockchainConnection from './config/blockchain.js'; 
-import ParaInstanceManager from './config/para.js';
+import transferRoutes from './routes/transfer.js'
 
 const app = express();
 const port = 3001;
@@ -28,7 +28,7 @@ const blockchainConnection = BlockchainConnection.getInstance();
 app.use('/api/auth', authRoutes);
 app.use('/api/livy', livyRoutes);
 app.use('/api/livy', documentRoutes);
-
+app.use('/api/transfer', transferRoutes);
 
 // ✅ ADD THIS ROOT ENDPOINT
 app.get('/', (req, res) => {
