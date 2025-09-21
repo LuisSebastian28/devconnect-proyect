@@ -7,7 +7,8 @@ import PymeDashboard from "./layout/PymeDashboard";
 
 export const router = createBrowserRouter([
   // login route (sin protección)
-  { path: "/", element: <App /> },
+  //{ path: "/", element: <App /> },
+  { path: "/", element: <Explorer /> },
   { path: "/explorer", element: <Explorer /> },
   { path: "/login", element: <Login /> },
   { path: "/register", element: <Register /> },

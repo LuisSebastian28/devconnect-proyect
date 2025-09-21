@@ -1,4 +1,4 @@
-// src/layout/Login.tsx
+// src/layout/Login.tsx - Fixed with real authentication
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/Cards";
@@ -7,7 +7,8 @@ import { Input } from "../components/ui/Input";
 import Separator from "../components/ui/separator";
 import Footer from "../components/Footer";
 import { Navbar } from "../components/Navbar";
-import { Phone, ArrowLeft, Eye, EyeOff, Mail, User, Building } from "lucide-react";
+import { Phone, ArrowLeft } from "lucide-react";
+import { useAuth } from "../context/AuthContext"; // ✅ AGREGAR ESTA IMPORTACIÓN
 
 // Datos de códigos de país
 const countryCodes = [
@@ -26,13 +27,15 @@ const countryCodes = [
 
 export default function Login() {
   const navigate = useNavigate();
+  const { login, isLoading } = useAuth(); // ✅ USAR EL AUTH CONTEXT
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState(countryCodes[7]); // Bolivia por defecto
-  const [userType, setUserType] = useState<"investor" | "entrepreneur">("investor");
+  const [userType, setUserType] = useState<"investor" | "entrepreneur">("entrepreneur"); // ✅ Cambiar default a entrepreneur
   const [loginData, setLoginData] = useState({
     phone: "",
     password: ""
   });
+  const [error, setError] = useState(""); // ✅ AGREGAR ESTADO PARA ERRORES
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -51,17 +54,31 @@ export default function Login() {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // ✅ REEMPLAZAR handleSubmit CON LÓGICA REAL DE AUTENTICACIÓN
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Lógica de inicio de sesión aquí
+    setError(""); // Limpiar errores previos
+    
     const fullPhone = `${selectedCountry.code}${loginData.phone}`;
-    console.log("Iniciando sesión:", { 
-      userType, 
-      phone: fullPhone,
-      password: loginData.password
-    });
-    // Redirigir al dashboard después del login exitoso
-    navigate("/dashboard");
+    console.log("🔐 Starting login process:", { userType, phone: fullPhone });
+    
+    try {
+      // ✅ USAR EL LOGIN DEL AUTH CONTEXT
+      await login(fullPhone, userType);
+      
+      console.log("✅ Login successful, redirecting...");
+      
+      // ✅ REDIRIGIR BASADO EN TIPO DE USUARIO
+      if (userType === "investor") {
+        navigate("/investor-dashboard");
+      } else {
+        navigate("/dashboard");
+      }
+      
+    } catch (error) {
+      console.error("❌ Login failed:", error);
+      setError(error instanceof Error ? error.message : 'Error al iniciar sesión. Verifica tus datos.');
+    }
   };
 
   const selectCountry = (country: any) => {
@@ -92,9 +109,20 @@ export default function Login() {
               <CardDescription className="text-gray-600">
                 Accede a tu cuenta de CrowdLend
               </CardDescription>
+              {/* ✅ AGREGAR DEBUG INFO */}
+              <div className="text-xs text-gray-500 mt-2">
+                Debug: isLoading = {isLoading.toString()}
+              </div>
             </CardHeader>
 
             <CardContent className="pt-4">
+              {/* ✅ MOSTRAR ERRORES */}
+              {error && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                  {error}
+                </div>
+              )}
+
               {/* Selector de tipo de usuario */}
               <div className="grid grid-cols-2 gap-2 p-1 bg-blue-100 rounded-lg mb-6">
                 <Button
@@ -106,6 +134,7 @@ export default function Login() {
                       : "text-blue-700 hover:bg-blue-200"
                   }`}
                   onClick={() => setUserType("investor")}
+                  disabled={isLoading} // ✅ DESHABILITAR DURANTE LOGIN
                 >
                   Inversionista
                 </Button>
@@ -118,6 +147,7 @@ export default function Login() {
                       : "text-blue-700 hover:bg-blue-200"
                   }`}
                   onClick={() => setUserType("entrepreneur")}
+                  disabled={isLoading} // ✅ DESHABILITAR DURANTE LOGIN
                 >
                   Emprendedor
                 </Button>
@@ -135,14 +165,15 @@ export default function Login() {
                       <button
                         type="button"
                         onClick={() => setShowCountryDropdown(!showCountryDropdown)}
-                        className="flex items-center gap-2 px-3 py-2 h-10 border border-gray-300 rounded-lg bg-white text-gray-700 hover:border-gray-400 focus:border-blue-500 focus:ring-blue-500 focus:outline-none min-w-[80px]"
+                        disabled={isLoading} // ✅ DESHABILITAR DURANTE LOGIN
+                        className="flex items-center gap-2 px-3 py-2 h-10 border border-gray-300 rounded-lg bg-white text-gray-700 hover:border-gray-400 focus:border-blue-500 focus:ring-blue-500 focus:outline-none min-w-[80px] disabled:opacity-50"
                       >
                         <span>{selectedCountry.flag}</span>
                         <span className="text-sm">{selectedCountry.code}</span>
                         <ChevronDown className="w-4 h-4" />
                       </button>
                       
-                      {showCountryDropdown && (
+                      {showCountryDropdown && !isLoading && (
                         <div className="absolute top-full left-0 mt-1 w-48 max-h-60 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-lg z-10">
                           {countryCodes.map((country) => (
                             <button
@@ -171,18 +202,34 @@ export default function Login() {
                         className="pl-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                         value={loginData.phone}
                         onChange={handlePhoneChange}
+                        disabled={isLoading} // ✅ DESHABILITAR DURANTE LOGIN
                         required
                       />
                     </div>
                   </div>
                 </div>
 
+                {/* ✅ AGREGAR VALIDACIÓN MÍNIMA */}
+                {loginData.phone && loginData.phone.length < 8 && (
+                  <div className="text-sm text-amber-600">
+                    El número debe tener al menos 8 dígitos
+                  </div>
+                )}
+
                 <Button 
                   type="submit" 
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition-colors"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   size="lg"
+                  disabled={isLoading || loginData.phone.length < 8} // ✅ DESHABILITAR SI ESTÁ CARGANDO O TELÉFONO INVÁLIDO
                 >
-                  Iniciar Sesión
+                  {isLoading ? (
+                    <div className="flex items-center gap-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      Iniciando sesión...
+                    </div>
+                  ) : (
+                    "Iniciar Sesión"
+                  )}
                 </Button>
               </form>
 
@@ -191,11 +238,13 @@ export default function Login() {
               <div className="text-center">
                 <p className="text-sm text-gray-600 mb-4">
                   ¿No tienes una cuenta?{" "}
-                  <Link to="/register" className="text-blue-600 font-medium hover:text-blue-800">
+                  <Link 
+                    to="/register" 
+                    className="text-blue-600 font-medium hover:text-blue-800"
+                  >
                     Regístrate ahora
                   </Link>
                 </p>
-                
               </div>
             </CardContent>
           </Card>
@@ -217,20 +266,6 @@ function ChevronDown({ className }: { className?: string }) {
       viewBox="0 0 24 24"
     >
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-    </svg>
-  );
-}
-
-// Componente Check
-function Check({ className }: { className?: string }) {
-  return (
-    <svg 
-      className={className} 
-      fill="none" 
-      stroke="currentColor" 
-      viewBox="0 0 24 24"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
     </svg>
   );
 }

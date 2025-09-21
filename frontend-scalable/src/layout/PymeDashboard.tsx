@@ -6,33 +6,58 @@ import WalletCard from "../components/dashboard/WalletCard";
 import LoanForm from "../components/dashboard/LoanForm";
 import LoansList from "../components/dashboard/LoansList";
 import LoanDetailsModal from "../components/dashboard/LoanDetailsModal";
-import type{ Loan } from "../types/loan";
-import { ArrowLeft, Plus } from "lucide-react";
+import type { Loan } from "../types/loan";
+import { ArrowLeft, Plus, User } from "lucide-react";
 import { Button } from "../components/Button";
+import { useAuth } from "../context/AuthContext";
 
 export default function PymeDashboard() {
   const navigate = useNavigate();
+  const { user, wallet, isLoading } = useAuth();
+  
   const [loans, setLoans] = useState<Loan[]>([]);
   const [showLoanForm, setShowLoanForm] = useState(false);
   const [selectedLoan, setSelectedLoan] = useState<Loan | null>(null);
 
-  // Simular carga de préstamos existentes
+  console.log('PymeDashboard rendering - User:', user, 'Wallet:', wallet, 'Loading:', isLoading);
+
+  // ✅ Enhanced authentication check
   useEffect(() => {
-    const mockLoans: Loan[] = [
-      {
-        id: "LN-001",
-        amount: 15000,
-        term: 12,
-        interestRate: 8.5,
-        status: "pending",
-        requestDate: "2024-01-15",
-        collateral: "Inventario actual",
-        purpose: "Expansión de inventario para temporada alta",
-        monthlyPayment: 1354.17
+    if (!isLoading) {
+      if (!user) {
+        console.log('No user found, redirecting to login');
+        navigate('/login');
+      } else if (user.userType !== 'entrepreneur') {
+        console.log('Wrong user type for Pyme dashboard, redirecting...');
+        if (user.userType === 'investor') {
+          navigate('/investor-dashboard');
+        } else {
+          navigate('/login');
+        }
+      } else {
+        console.log('Entrepreneur user authenticated successfully');
       }
-    ];
-    setLoans(mockLoans);
-  }, []);
+    }
+  }, [user, isLoading, navigate]);
+
+  useEffect(() => {
+    if (user?.userType === 'entrepreneur') {
+      const mockLoans: Loan[] = [
+        {
+          id: "LN-001",
+          amount: 15000,
+          term: 12,
+          interestRate: 8.5,
+          status: "pending",
+          requestDate: "2024-01-15",
+          collateral: "Inventario actual",
+          purpose: "Expansión de inventario para temporada alta",
+          monthlyPayment: 1354.17
+        }
+      ];
+      setLoans(mockLoans);
+    }
+  }, [user]);
 
   const handleNewLoan = (newLoan: Loan) => {
     setLoans(prev => [newLoan, ...prev]);
@@ -47,13 +72,33 @@ export default function PymeDashboard() {
     setSelectedLoan(null);
   };
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Cargando información...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user || user.userType !== 'entrepreneur') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <p className="text-gray-600">Redirigiendo...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Navbar />
       
       <main className="flex-grow py-8">
         <div className="container mx-auto px-4 max-w-4xl">
-          {/* Header */}
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-4">
               <Button 
@@ -64,7 +109,13 @@ export default function PymeDashboard() {
                 <ArrowLeft className="w-4 h-4" />
                 Volver
               </Button>
-              <h1 className="text-3xl font-bold text-gray-800">Dashboard Pyme</h1>
+              <div>
+                <h1 className="text-3xl font-bold text-gray-800">Dashboard Pyme</h1>
+                <p className="text-gray-600 flex items-center gap-1">
+                  <User className="w-4 h-4" />
+                  {user.fullName} {user.company && `- ${user.company}`}
+                </p>
+              </div>
             </div>
             
             <Button 
@@ -76,7 +127,6 @@ export default function PymeDashboard() {
             </Button>
           </div>
 
-          {/* Formulario de préstamo */}
           {showLoanForm && (
             <LoanForm 
               onSubmit={handleNewLoan}
@@ -84,18 +134,15 @@ export default function PymeDashboard() {
             />
           )}
 
-          {/* Información de la billetera */}
           <div className="mb-8">
             <WalletCard />
           </div>
 
-          {/* Lista de préstamos */}
           <LoansList 
             loans={loans}
             onLoanClick={handleLoanClick}
           />
 
-          {/* Modal de detalles del préstamo */}
           {selectedLoan && (
             <LoanDetailsModal 
               loan={selectedLoan}
@@ -105,7 +152,6 @@ export default function PymeDashboard() {
         </div>
       </main>
 
-      <Footer />
     </div>
   );
 }
