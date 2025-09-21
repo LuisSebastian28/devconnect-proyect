@@ -58,58 +58,58 @@ export const transferController = {
   },
 
   async transferETH(req, res) {
-    try {
-      const { fromPhone, toAddress, amount } = req.body;
-      
-      // Validaciones básicas
-      if (!fromPhone || !toAddress || !amount) {
-        return res.status(400).json({
-          success: false,
-          message: 'Todos los campos son requeridos: fromPhone, toAddress, amount'
-        });
-      }
-
-      if (amount <= 0) {
-        return res.status(400).json({
-          success: false,
-          message: 'El monto debe ser mayor a 0'
-        });
-      }
-
-      // Obtener wallet del remitente
-      const wallet = await walletRepository.getWalletByPhone(fromPhone);
-      if (!wallet) {
-        return res.status(404).json({
-          success: false,
-          message: 'Wallet no encontrada para el número proporcionado'
-        });
-      }
-
-      // Realizar transferencia
-      const result = await walletService.transferETH(wallet.id, toAddress, amount);
-
-      res.json({
-        success: true,
-        message: 'Transferencia de ETH exitosa',
-        transaction: {
-          hash: result.hash,
-          from: result.from,
-          to: result.to,
-          amount: result.amount,
-          status: 'pending'
-        }
-      });
-
-    } catch (error) {
-      console.error('Error en transferETH:', error);
-      res.status(400).json({
+  try {
+    const { fromPhone, toAddress, amount } = req.body;
+    
+    // Validaciones básicas
+    if (!fromPhone || !toAddress || !amount) {
+      return res.status(400).json({
         success: false,
-        message: error.message || 'Error en la transferencia'
+        message: 'Todos los campos son requeridos: fromPhone, toAddress, amount'
       });
     }
-  },
 
-  async getTransactionStatus(req, res) {
+    if (amount <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'El monto debe ser mayor a 0'
+      });
+    }
+
+    // Obtener wallet del remitente usando el teléfono
+    const wallet = await walletRepository.getWalletByPhone(fromPhone);
+    if (!wallet) {
+      return res.status(404).json({
+        success: false,
+        message: 'Wallet no encontrada para el número proporcionado'
+      });
+    }
+
+    // Realizar transferencia usando el ID real de la wallet
+    const result = await walletService.transferETH(wallet.id, toAddress, amount);
+
+    res.json({
+      success: true,
+      message: 'Transferencia de ETH exitosa',
+      transaction: {
+        hash: result.hash,
+        from: result.from,
+        to: result.to,
+        amount: result.amount,
+        status: 'pending'
+      }
+    });
+
+  } catch (error) {
+    console.error('Error en transferETH:', error);
+    res.status(400).json({
+      success: false,
+      message: error.message || 'Error en la transferencia'
+    });
+  }
+},
+
+   getTransactionStatus(req, res) {
     try {
       const { txHash } = req.params;
       
@@ -120,7 +120,7 @@ export const transferController = {
         });
       }
 
-      const status = await walletService.getTransactionStatus(txHash);
+      const status =  walletService.getTransactionStatus(txHash);
       
       res.json({
         success: true,

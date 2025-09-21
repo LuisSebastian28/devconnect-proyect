@@ -12,15 +12,17 @@ class WalletRepository {
     this.initializeDB();
   }
 
-  // Inicializar la base de datos JSON con estructura simplificada
+  // Inicializar la base de datos JSON con estructura mejorada
   initializeDB() {
     if (!fs.existsSync(DB_PATH)) {
       const initialData = {
-        users: {}, // Solo una entrada por usuario, indexada por teléfono
+        users: {},
+        wallets: {}, // Almacenar wallets separadamente por su ID real
+        walletPhoneIndex: {}, // Índice para buscar wallets por teléfono
         lastUserId: 0
       };
       this.saveToDB(initialData);
-      console.log('✅ Base de datos JSON inicializada con estructura simplificada');
+      console.log('✅ Base de datos JSON inicializada con estructura mejorada');
     }
   }
 
@@ -31,6 +33,8 @@ class WalletRepository {
       if (!data.trim()) {
         const initialData = {
           users: {},
+          wallets: {},
+          walletPhoneIndex: {},
           lastUserId: 0
         };
         this.saveToDB(initialData);
@@ -43,6 +47,8 @@ class WalletRepository {
       
       const initialData = {
         users: {},
+        wallets: {},
+        walletPhoneIndex: {},
         lastUserId: 0
       };
       this.saveToDB(initialData);
@@ -60,7 +66,74 @@ class WalletRepository {
     }
   }
 
-  // ========== MÉTODOS PARA USUARIOS (CON WALLET INTEGRADA) ==========
+  // ========== MÉTODOS PARA WALLETS ==========
+
+  async saveWallet(walletData) {
+    const db = this.readDB();
+    
+    // Guardar wallet con su ID real (UUID de Para)
+    db.wallets[walletData.id] = {
+      ...walletData,
+      created_at: walletData.created_at || new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    
+    // Crear índice por teléfono
+    db.walletPhoneIndex[walletData.user_phone] = walletData.id;
+    
+    this.saveToDB(db);
+    return walletData;
+  }
+
+  async getWalletByPhone(phone) {
+    const db = this.readDB();
+    
+    // Buscar el ID de wallet usando el índice
+    const walletId = db.walletPhoneIndex[phone];
+    if (!walletId) {
+      return null;
+    }
+    
+    // Obtener la wallet usando el ID real
+    return db.wallets[walletId] || null;
+  }
+
+  async getWalletById(walletId) {
+    const db = this.readDB();
+    return db.wallets[walletId] || null;
+  }
+
+  async getAddressByPhoneNumber(phone) {
+    const wallet = await this.getWalletByPhone(phone);
+    return wallet?.blockchain_address || null;
+  }
+
+  async getUserShareByPhoneNumber(phone) {
+    const wallet = await this.getWalletByPhone(phone);
+    return wallet?.encrypterusershare || null;
+  }
+
+  async updateWalletBalance(phone, newBalance) {
+    const db = this.readDB();
+    const walletId = db.walletPhoneIndex[phone];
+    
+    if (!walletId || !db.wallets[walletId]) {
+      return null;
+    }
+    
+    db.wallets[walletId].balance_usd = newBalance;
+    db.wallets[walletId].updated_at = new Date().toISOString();
+    
+    this.saveToDB(db);
+    return db.wallets[walletId];
+  }
+
+  async getAllWallets() {
+    const db = this.readDB();
+    return Object.values(db.wallets);
+  }
+
+  // ========== MÉTODOS PARA USUARIOS ==========
 
   async saveUser(userData) {
     const db = this.readDB();
@@ -69,7 +142,6 @@ class WalletRepository {
     const userId = db.lastUserId;
 
     const user = {
-      // Información del usuario
       id: userId,
       fullName: userData.fullName,
       phone: userData.phone,
@@ -77,24 +149,10 @@ class WalletRepository {
       company: userData.company || null,
       status: userData.status || 'active',
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      
-      // Información de wallet (inicialmente vacía, se llena cuando se crea la wallet)
-      wallet: {
-        blockchain_address: null,
-        private_key_ref: null,
-        type_wallet: null,
-        encrypterusershare: null,
-        nonce: 0,
-        balance_usd: 0,
-        wallet_created_at: null,
-        wallet_updated_at: null
-      }
+      updatedAt: new Date().toISOString()
     };
 
-    // Guardar usuario indexado solo por teléfono (más limpio)
     db.users[userData.phone] = user;
-
     this.saveToDB(db);
     return user;
   }
@@ -117,311 +175,63 @@ class WalletRepository {
     return null;
   }
 
-  async updateUser(phone, updates) {
-    const db = this.readDB();
-    const user = db.users[phone];
-    
-    if (!user) {
-      return null;
-    }
-
-    const updatedUser = {
-      ...user,
-      ...updates,
-      updatedAt: new Date().toISOString()
-    };
-
-    db.users[phone] = updatedUser;
-    this.saveToDB(db);
-    return updatedUser;
-  }
-
-  async deleteUser(phone) {
-    const db = this.readDB();
-    const user = db.users[phone];
-    
-    if (user) {
-      delete db.users[phone];
-      this.saveToDB(db);
-    }
-    
-    return user;
-  }
-
-  async getAllUsers() {
-    const db = this.readDB();
-    return Object.values(db.users);
-  }
-
-  // ========== MÉTODOS PARA WALLETS (INTEGRADOS CON USUARIO) ==========
-
-  async saveWallet(walletData) {
-    const db = this.readDB();
-    const user = db.users[walletData.user_phone];
-    
-    if (!user) {
-      throw new Error('Usuario no encontrado para crear wallet');
-    }
-
-    // Actualizar la información de wallet dentro del usuario
-    user.wallet = {
-      blockchain_address: walletData.blockchain_address,
-      private_key_ref: walletData.private_key_ref,
-      type_wallet: walletData.type_wallet,
-      encrypterusershare: walletData.encrypterusershare,
-      nonce: walletData.nonce || 0,
-      balance_usd: walletData.balance_usd || 0,
-      wallet_created_at: new Date().toISOString(),
-      wallet_updated_at: new Date().toISOString()
-    };
-
-    user.updatedAt = new Date().toISOString();
-    
-    db.users[walletData.user_phone] = user;
-    this.saveToDB(db);
-    
-    // Retornar un objeto que simule la estructura anterior para compatibilidad
-    return {
-      id: walletData.id || `wallet-${user.id}`,
-      user_phone: walletData.user_phone,
-      blockchain_address: walletData.blockchain_address,
-      private_key_ref: walletData.private_key_ref,
-      type_wallet: walletData.type_wallet,
-      encrypterusershare: walletData.encrypterusershare,
-      nonce: walletData.nonce || 0,
-      balance_usd: walletData.balance_usd || 0,
-      created_at: user.wallet.wallet_created_at
-    };
-  }
-
-  async getWalletByPhone(phone) {
-    const user = await this.findUserByPhone(phone);
-    
-    if (!user || !user.wallet || !user.wallet.blockchain_address) {
-      return null;
-    }
-
-    // Retornar formato compatible con el código existente
-    return {
-      id: `wallet-${user.id}`,
-      user_phone: phone,
-      blockchain_address: user.wallet.blockchain_address,
-      private_key_ref: user.wallet.private_key_ref,
-      type_wallet: user.wallet.type_wallet,
-      encrypterusershare: user.wallet.encrypterusershare,
-      nonce: user.wallet.nonce,
-      balance_usd: user.wallet.balance_usd,
-      created_at: user.wallet.wallet_created_at
-    };
-  }
-
-  async getWalletById(id) {
-    // Extraer el ID de usuario del ID de wallet
-    const userId = parseInt(id.replace('wallet-', ''));
-    const user = await this.findUserById(userId);
-    
-    if (!user || !user.wallet || !user.wallet.blockchain_address) {
-      return null;
-    }
-
-    return {
-      id: id,
-      user_phone: user.phone,
-      blockchain_address: user.wallet.blockchain_address,
-      private_key_ref: user.wallet.private_key_ref,
-      type_wallet: user.wallet.type_wallet,
-      encrypterusershare: user.wallet.encrypterusershare,
-      nonce: user.wallet.nonce,
-      balance_usd: user.wallet.balance_usd,
-      created_at: user.wallet.wallet_created_at
-    };
-  }
-
-  async getAddressByPhoneNumber(phone) {
-    const user = await this.findUserByPhone(phone);
-    return user?.wallet?.blockchain_address || null;
-  }
-
-  async getUserShareByPhoneNumber(phone) {
-    const user = await this.findUserByPhone(phone);
-    return user?.wallet?.encrypterusershare || null;
-  }
-
-  async updateWallet(phone, updates) {
-    const db = this.readDB();
-    const user = db.users[phone];
-    
-    if (!user || !user.wallet) {
-      return null;
-    }
-
-    // Actualizar información de wallet
-    user.wallet = {
-      ...user.wallet,
-      ...updates,
-      wallet_updated_at: new Date().toISOString()
-    };
-
-    user.updatedAt = new Date().toISOString();
-    
-    db.users[phone] = user;
-    this.saveToDB(db);
-    
-    return this.getWalletByPhone(phone);
-  }
-
-  async updateWalletBalance(phone, newBalance) {
-    return this.updateWallet(phone, {
-      balance_usd: newBalance
-    });
-  }
-
-  async incrementWalletNonce(phone) {
-    const user = await this.findUserByPhone(phone);
-    if (!user?.wallet) return null;
-
-    const newNonce = (user.wallet.nonce || 0) + 1;
-    return this.updateWallet(phone, {
-      nonce: newNonce
-    });
-  }
-
-  async deleteWallet(phone) {
-    const db = this.readDB();
-    const user = db.users[phone];
-    
-    if (user?.wallet) {
-      // Limpiar información de wallet pero mantener el usuario
-      user.wallet = {
-        blockchain_address: null,
-        private_key_ref: null,
-        type_wallet: null,
-        encrypterusershare: null,
-        nonce: 0,
-        balance_usd: 0,
-        wallet_created_at: null,
-        wallet_updated_at: null
-      };
-      
-      user.updatedAt = new Date().toISOString();
-      db.users[phone] = user;
-      this.saveToDB(db);
-      
-      return true;
-    }
-    
-    return false;
-  }
-
-  async getAllWallets() {
-    const db = this.readDB();
-    const wallets = [];
-    
-    for (const phone in db.users) {
-      const user = db.users[phone];
-      if (user.wallet && user.wallet.blockchain_address) {
-        wallets.push({
-          id: `wallet-${user.id}`,
-          user_phone: phone,
-          blockchain_address: user.wallet.blockchain_address,
-          private_key_ref: user.wallet.private_key_ref,
-          type_wallet: user.wallet.type_wallet,
-          encrypterusershare: user.wallet.encrypterusershare,
-          nonce: user.wallet.nonce,
-          balance_usd: user.wallet.balance_usd,
-          created_at: user.wallet.wallet_created_at
-        });
-      }
-    }
-    
-    return wallets;
-  }
-
   // ========== MÉTODOS COMBINADOS ==========
 
   async getUserWithWallet(phone) {
     const user = await this.findUserByPhone(phone);
-    
-    if (!user) {
-      return { user: null, wallet: null };
-    }
-    
-    const wallet = user.wallet.blockchain_address ? {
-      id: `wallet-${user.id}`,
-      user_phone: phone,
-      blockchain_address: user.wallet.blockchain_address,
-      private_key_ref: user.wallet.private_key_ref,
-      type_wallet: user.wallet.type_wallet,
-      encrypterusershare: user.wallet.encrypterusershare,
-      nonce: user.wallet.nonce,
-      balance_usd: user.wallet.balance_usd,
-      created_at: user.wallet.wallet_created_at
-    } : null;
+    const wallet = await this.getWalletByPhone(phone);
     
     return { user, wallet };
   }
 
-  // Método para ver la estructura completa (útil para debugging)
-  async getUserComplete(phone) {
-    const db = this.readDB();
-    return db.users[phone] || null;
-  }
-
-  // Migrar datos existentes al nuevo formato (ejecutar una sola vez)
+  // Método para migrar datos existentes al nuevo formato
   async migrateToNewFormat() {
     const db = this.readDB();
     
     // Si ya está en el nuevo formato, no hacer nada
-    if (!db.wallets) {
+    if (db.wallets && db.walletPhoneIndex) {
       console.log('Base de datos ya está en el nuevo formato');
       return;
     }
     
     console.log('Migrando a nuevo formato...');
     
-    const newUsers = {};
-    let maxId = 0;
+    // Inicializar nuevas estructuras si no existen
+    if (!db.wallets) db.wallets = {};
+    if (!db.walletPhoneIndex) db.walletPhoneIndex = {};
     
-    // Migrar usuarios existentes
-    for (const key in db.users) {
-      if (!isNaN(key)) { // Solo IDs numéricos
-        const user = db.users[key];
-        maxId = Math.max(maxId, user.id);
+    // Buscar wallets en la estructura antigua y migrarlas
+    for (const phone in db.users) {
+      const user = db.users[phone];
+      
+      // Si el usuario tiene wallet integrada en la estructura antigua
+      if (user.wallet && user.wallet.blockchain_address) {
+        // Crear un ID único para la wallet
+        const walletId = `wallet-${user.id}`;
         
-        // Buscar wallet correspondiente
-        const wallet = db.wallets[user.phone];
-        
-        newUsers[user.phone] = {
-          ...user,
-          wallet: wallet ? {
-            blockchain_address: wallet.blockchain_address,
-            private_key_ref: wallet.private_key_ref,
-            type_wallet: wallet.type_wallet,
-            encrypterusershare: wallet.encrypterusershare,
-            nonce: wallet.nonce || 0,
-            balance_usd: wallet.balance_usd || 0,
-            wallet_created_at: wallet.created_at,
-            wallet_updated_at: wallet.updated_at
-          } : {
-            blockchain_address: null,
-            private_key_ref: null,
-            type_wallet: null,
-            encrypterusershare: null,
-            nonce: 0,
-            balance_usd: 0,
-            wallet_created_at: null,
-            wallet_updated_at: null
-          }
+        // Migrar la wallet
+        db.wallets[walletId] = {
+          id: walletId,
+          user_phone: phone,
+          blockchain_address: user.wallet.blockchain_address,
+          private_key_ref: user.wallet.private_key_ref,
+          type_wallet: user.wallet.type_wallet,
+          encrypterusershare: user.wallet.encrypterusershare,
+          nonce: user.wallet.nonce || 0,
+          balance_usd: user.wallet.balance_usd || 0,
+          created_at: user.wallet.wallet_created_at || new Date().toISOString(),
+          updated_at: user.wallet.wallet_updated_at || new Date().toISOString()
         };
+        
+        // Crear índice
+        db.walletPhoneIndex[phone] = walletId;
+        
+        // Limpiar la wallet del usuario
+        delete user.wallet;
       }
     }
     
-    const newDB = {
-      users: newUsers,
-      lastUserId: maxId
-    };
-    
-    this.saveToDB(newDB);
+    this.saveToDB(db);
     console.log('✅ Migración completada');
   }
 }

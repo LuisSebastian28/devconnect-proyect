@@ -12,11 +12,14 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "@getpara/ethers-v6-integration": "^1.18.1",
     "@getpara/server-sdk": "^2.0.0-alpha.50",
+    "@getpara/viem-v2-integration": "^1.18.1",
     "@livylabs/sdk": "^0.0.5",
     "cors": "^2.8.5",
     "dotenv": "^17.2.2",
     "ethers": "^6.15.0",
-    "express": "^5.1.0"
+    "express": "^5.1.0",
+    "viem": "^2.37.7"
   }
 }

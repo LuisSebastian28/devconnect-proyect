@@ -3,6 +3,8 @@ import crypto from "crypto";
 import ParaInstanceManager from "../config/para.js";
 //import {USDT_CONTRACT_ADDRESSES, USDT_ABI} from "../config/token.js";  
 import {ethers} from "ethers";
+import { parseEther, isAddress, http } from 'viem';
+import { createParaAccount, createParaViemClient } from "@getpara/viem-v2-integration";
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -12,6 +14,33 @@ const NETWORK_CONFIG = {
     chainId: 11155111
   }
 };
+
+const sepoliaChain = {
+  id: 11155111,
+  name: 'Sepolia',
+  network: 'sepolia',
+  nativeCurrency: {
+    decimals: 18,
+    name: 'Ether',
+    symbol: 'ETH',
+  },
+  rpcUrls: {
+    public: { http: [NETWORK_CONFIG.SEPOLIA.rpcUrl] },
+    default: { http: [NETWORK_CONFIG.SEPOLIA.rpcUrl] },
+  },
+  blockExplorers: {
+    etherscan: { name: 'Etherscan', url: 'https://sepolia.etherscan.io' },
+    default: { name: 'Etherscan', url: 'https://sepolia.etherscan.io' },
+  },
+  testnet: true,
+};
+
+
+import { createPublicClient } from 'viem';
+const publicClient = createPublicClient({
+  chain: sepoliaChain,
+  transport: http(NETWORK_CONFIG.SEPOLIA.rpcUrl),
+});
 
 class WalletService {
   constructor(walletRepository) {
@@ -122,13 +151,9 @@ class WalletService {
           created_at: new Date(),
         };
       }
-
-      // Save the wallet to our database
       await this.walletRepository.saveWallet(walletData);
       console.log(`✅ Wallet saved to database for phone number: ${phoneNumber}`);
       console.log(`✅ Wallet address: ${walletData.blockchain_address}`);
-      console.log(`✅ User share encrypted and stored`);
-      
       return walletData;
     } catch (error) {
       console.error("Error in createWallet:", error);
@@ -223,41 +248,6 @@ class WalletService {
     }
   }
 
-  async getETHBalance(walletId) {
-    try {
-      console.log(`[getETHBalance] Getting ETH balance for wallet: ${walletId}`);
-      
-      let wallet;
-      try {
-        wallet = await this.walletRepository.getWalletById(walletId);
-      } catch (error) {
-        console.log(`[getETHBalance] getWalletById failed, trying getWalletByPhone`);
-        wallet = await this.walletRepository.getWalletByPhone(walletId);
-      }
-      
-      if (!wallet || !wallet.blockchain_address) {
-        console.warn(`[getETHBalance] No wallet found or no blockchain address`);
-        return 0;
-      }
-
-      const provider = new ethers.JsonRpcProvider(NETWORK_CONFIG.SEPOLIA.rpcUrl);
-      const balance = await provider.getBalance(wallet.blockchain_address);
-      const balanceInETH = Number(ethers.formatEther(balance));
-      
-      console.log(`[getETHBalance] ETH balance: ${balanceInETH} ETH`);
-      return balanceInETH;
-      
-    } catch (error) {
-      console.error('[getETHBalance] Error getting ETH balance:', error);
-      
-      try {
-        return await this.getETHBalanceFallback(walletId);
-      } catch (fallbackError) {
-        console.error('[getETHBalance] Fallback method also failed:', fallbackError);
-        return 0;
-      }
-    }
-  }
 
   async getETHBalanceFallback(walletId) {
     try {
@@ -304,44 +294,17 @@ class WalletService {
     }
   }
 
-  async transferETH(walletId, toAddress, amount) {
-    try {
-      const paraServer = this.paraManager.getParaServer();
-      
-      if (!toAddress || !ethers.isAddress(toAddress)) {
-        throw new Error("Dirección de destino inválida");
+
+  // Método auxiliar para obtener teléfono desde wallet ID en formato wallet-X
+  async getPhoneFromWalletId(walletId) {
+    const db = this.walletRepository.readDB();
+    for (const phone in db.walletPhoneIndex) {
+      if (db.walletPhoneIndex[phone] === walletId) {
+        return phone;
       }
-
-      if (amount <= 0) {
-        throw new Error("El monto debe ser mayor a 0");
-      }
-      
-      const amountInWei = ethers.parseEther(amount.toString());
-      const result = await paraServer.transfer({
-        walletId: walletId,
-        to: toAddress, 
-        amount: amountInWei.toString(), 
-        chainId: NETWORK_CONFIG.SEPOLIA.chainId.toString(),
-      });
-
-      console.log(`✅ ${amount} ETH transferidos a ${toAddress}`);
-      console.log(`📫 Hash de transacción: ${result.hash}`);
-
-      return {
-        success: true,
-        hash: result.hash,
-        amount: amount,
-        to: toAddress,
-        from: result.from,
-        chainId: result.chainId
-      };
-
-    } catch (error) {
-      console.error('Error transferring ETH:', error);
-      throw new Error(`Failed to transfer ETH: ${error.message}`);
     }
+    return null;
   }
-
   async enrichWalletWithBalance(wallet) {
     try {
       console.log(`[enrichWalletWithBalance] Processing wallet for: ${wallet.user_phone}`);
@@ -424,24 +387,6 @@ class WalletService {
     }
   }
 
-  async getTransactionStatus(txHash) {
-    try {
-      const provider = new ethers.JsonRpcProvider(NETWORK_CONFIG.SEPOLIA.rpcUrl);
-      const receipt = await provider.getTransactionReceipt(txHash);
-      
-      return {
-        hash: txHash,
-        status: receipt ? (receipt.status === 1 ? 'confirmed' : 'failed') : 'pending',
-        blockNumber: receipt?.blockNumber,
-        confirmations: receipt?.confirmations || 0,
-        timestamp: receipt?.timestamp ? new Date(receipt.timestamp * 1000) : null
-      };
-    } catch (error) {
-      console.error('Error getting transaction status:', error);
-      return { hash: txHash, status: 'unknown', error: error.message };
-    }
-  }
-
   async getWalletTransactions(walletId) {
     try {
       const paraServer = this.paraManager.getParaServer();
@@ -456,6 +401,238 @@ class WalletService {
     } catch (error) {
       console.error('Error getting wallet transactions:', error);
       return [];
+    }
+  }
+
+  async transferETH(walletId, toAddress, amount) {
+    try {
+      console.log(`[transferETH] Starting transfer with Viem - Wallet: ${walletId}`);
+      
+      // 1. Obtener información de la wallet
+      const wallet = await this.walletRepository.getWalletById(walletId);
+      if (!wallet || !wallet.blockchain_address) {
+        throw new Error("Wallet not found");
+      }
+
+      console.log(`[transferETH] Wallet found: ${wallet.blockchain_address}`);
+
+      // 2. Validar parámetros
+      if (!isAddress(toAddress)) {
+        throw new Error("Dirección de destino inválida");
+      }
+
+      const amountInWei = parseEther(amount.toString());
+      if (amountInWei <= BigInt(0)) {
+        throw new Error("El monto debe ser mayor a 0");
+      }
+
+      // 3. Validar balance antes de la transferencia
+      await this.validateBalance(wallet.blockchain_address, amountInWei);
+      
+      // 4. Recuperar wallet en Para (cargar user share)
+      await this.recoverWallet(wallet.user_phone);
+      
+      // 5. Crear Para account y cliente Viem
+      const paraServer = this.paraManager.getParaServer();
+      const paraAccount = createParaAccount(paraServer);
+      const viemClient = createParaViemClient(paraServer, {
+        account: paraAccount,
+        chain: sepoliaChain,
+        transport: http(NETWORK_CONFIG.SEPOLIA.rpcUrl),
+      });
+
+      // 6. Obtener parámetros de transacción
+      const gasPrice = await publicClient.getGasPrice();
+      const nonce = await publicClient.getTransactionCount({ 
+        address: wallet.blockchain_address 
+      });
+      
+      console.log(`[transferETH] Transaction params:`, {
+        from: wallet.blockchain_address,
+        to: toAddress,
+        amount: amount,
+        nonce: nonce.toString(),
+        gasPrice: gasPrice.toString()
+      });
+
+      // 7. Preparar transacción
+      const transaction = {
+        account: paraAccount,
+        to: toAddress,
+        value: amountInWei,
+        gas: BigInt(21000), // Gas estándar para transferencia ETH
+        gasPrice: gasPrice,
+        nonce: nonce,
+        chain: sepoliaChain,
+      };
+
+      // 8. Enviar transacción
+      console.log(`[transferETH] Sending transaction...`);
+      const hash = await viemClient.sendTransaction(transaction);
+      
+      console.log(`[transferETH] Transaction sent with hash: ${hash}`);
+
+      // 9. Esperar confirmación
+      console.log(`[transferETH] Waiting for confirmation...`);
+      const receipt = await publicClient.waitForTransactionReceipt({ hash });
+      
+      // 10. Limpiar user share por seguridad
+      this.paraManager.clearUserShare();
+      
+      console.log(`[transferETH] Transaction confirmed:`, {
+        hash: receipt.transactionHash,
+        status: receipt.status,
+        blockNumber: receipt.blockNumber.toString(),
+        gasUsed: receipt.gasUsed.toString()
+      });
+
+      // 11. Retornar resultado
+      return {
+        success: true,
+        hash: receipt.transactionHash,
+        amount: amount,
+        to: toAddress,
+        from: wallet.blockchain_address,
+        status: receipt.status === 'success' ? 'confirmed' : 'failed',
+        blockNumber: receipt.blockNumber.toString(),
+        gasUsed: receipt.gasUsed.toString(),
+        effectiveGasPrice: receipt.effectiveGasPrice?.toString(),
+        timestamp: new Date().toISOString()
+      };
+
+    } catch (error) {
+      // Limpiar user share en caso de error
+      this.paraManager.clearUserShare();
+      console.error('[transferETH] Transfer failed:', error);
+      throw new Error(`Failed to transfer ETH: ${error.message}`);
+    }
+  }
+
+  // Validar balance suficiente para la transferencia
+  async validateBalance(fromAddress, amountInWei) {
+    try {
+      console.log(`[validateBalance] Checking balance for ${fromAddress}`);
+      
+      const balance = await publicClient.getBalance({ address: fromAddress });
+      const gasPrice = await publicClient.getGasPrice();
+      const gasLimit = BigInt(21000);
+      const maxGasFee = gasLimit * gasPrice;
+      const totalCost = amountInWei + maxGasFee;
+      
+      console.log(`[validateBalance] Balance: ${balance} wei (${ethers.formatEther(balance.toString())} ETH)`);
+      console.log(`[validateBalance] Amount: ${amountInWei} wei (${ethers.formatEther(amountInWei.toString())} ETH)`);
+      console.log(`[validateBalance] Est. Gas: ${maxGasFee} wei (${ethers.formatEther(maxGasFee.toString())} ETH)`);
+      console.log(`[validateBalance] Total needed: ${totalCost} wei (${ethers.formatEther(totalCost.toString())} ETH)`);
+      
+      if (totalCost > balance) {
+        throw new Error(
+          `Insufficient balance. Need ${ethers.formatEther(totalCost.toString())} ETH, have ${ethers.formatEther(balance.toString())} ETH`
+        );
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('[validateBalance] Error:', error);
+      throw error;
+    }
+  }
+
+  async getETHBalance(walletId) {
+    try {
+      console.log(`[getETHBalance] Getting ETH balance for wallet: ${walletId}`);
+      
+      let wallet;
+      try {
+        wallet = await this.walletRepository.getWalletById(walletId);
+      } catch (error) {
+        console.log(`[getETHBalance] getWalletById failed, trying getWalletByPhone`);
+        wallet = await this.walletRepository.getWalletByPhone(walletId);
+      }
+      
+      if (!wallet || !wallet.blockchain_address) {
+        console.warn(`[getETHBalance] No wallet found or no blockchain address`);
+        return 0;
+      }
+
+      // Usar Viem para obtener balance
+      const balance = await publicClient.getBalance({ 
+        address: wallet.blockchain_address 
+      });
+      
+      const balanceInETH = Number(ethers.formatEther(balance.toString()));
+      
+      console.log(`[getETHBalance] ETH balance: ${balanceInETH} ETH`);
+      return balanceInETH;
+      
+    } catch (error) {
+      console.error('[getETHBalance] Error getting ETH balance:', error);
+      return 0;
+    }
+  }
+
+  async getTransactionStatus(txHash) {
+    try {
+      console.log(`[getTransactionStatus] Getting status for: ${txHash}`);
+      
+      const receipt = await publicClient.getTransactionReceipt({ 
+        hash: txHash 
+      });
+      
+      return {
+        hash: txHash,
+        status: receipt.status === 'success' ? 'confirmed' : 'failed',
+        blockNumber: receipt.blockNumber.toString(),
+        gasUsed: receipt.gasUsed.toString(),
+        effectiveGasPrice: receipt.effectiveGasPrice?.toString(),
+        timestamp: new Date().toISOString()
+      };
+      
+    } catch (error) {
+      // Si no se encuentra el recibo, la transacción puede estar pendiente
+      if (error.message.includes('not found')) {
+        return {
+          hash: txHash,
+          status: 'pending',
+          timestamp: new Date().toISOString()
+        };
+      }
+      
+      console.error('[getTransactionStatus] Error:', error);
+      return { 
+        hash: txHash, 
+        status: 'unknown', 
+        error: error.message,
+        timestamp: new Date().toISOString()
+      };
+    }
+  }
+
+  async transferBetweenPhones(senderPhone, receiverPhone, amount) {
+    try {
+      console.log(`[transferBetweenPhones] Transfer from ${senderPhone} to ${receiverPhone}, amount: ${amount}`);
+      
+      // Obtener direcciones de ambas wallets
+      const senderWallet = await this.walletRepository.getWalletByPhone(senderPhone);
+      const receiverWallet = await this.walletRepository.getWalletByPhone(receiverPhone);
+      
+      if (!senderWallet) {
+        throw new Error('Sender wallet not found');
+      }
+      
+      if (!receiverWallet) {
+        throw new Error('Receiver wallet not found');
+      }
+      
+      // Usar el método de transferencia con las direcciones
+      return await this.transferETH(
+        senderWallet.id,
+        receiverWallet.blockchain_address,
+        amount
+      );
+      
+    } catch (error) {
+      console.error('[transferBetweenPhones] Error:', error);
+      throw error;
     }
   }
 
