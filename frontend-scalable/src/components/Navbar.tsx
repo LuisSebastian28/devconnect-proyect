@@ -1,4 +1,4 @@
-import { DollarSign, User, LogIn } from "lucide-react";
+import { DollarSign, User, LogIn, PlusCircle } from "lucide-react";
 import { Button } from "./Button";
 import { useState } from "react";
 import { useAccount } from "wagmi";
@@ -14,6 +14,7 @@ function ConnectWallet() {
 
 export const Navbar = () => {
   const navigate = useNavigate();
+  const { isConnected } = useAccount();
   const [activeTab, setActiveTab] = useState("explorer");
   const [showAuthDropdown, setShowAuthDropdown] = useState(false);
   
@@ -70,6 +71,17 @@ export const Navbar = () => {
 
             {/* Acciones de usuario */}
             <div className="flex items-center space-x-4">
+              {/* Botón de Crear Solicitud (solo visible si está conectado) */}
+              {isConnected && (
+                <Button
+                  onClick={() => navigate("/create-request")}
+                  className="bg-green-600 hover:bg-green-700 text-white"
+                >
+                  <PlusCircle className="w-4 h-4 mr-2" />
+                  Crear Solicitud
+                </Button>
+              )}
+              
               {/* Conectar billetera */}
               <ConnectWallet />
               
